@@ -15,9 +15,6 @@
 #*     copyright notice, this list of conditions and the following
 #*     disclaimer in the documentation and/or other materials provided
 #*     with the distribution.
-#*   * Neither the name of the Willow Garage nor the names of its
-#*     contributors may be used to endorse or promote products derived
-#*     from this software without specific prior written permission.
 #*
 #*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 #*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -38,6 +35,7 @@ import bluetooth
 import sys
 import struct
 import time
+import operator
 
 #These are the message response code that can be return by Sphero.
 MRSP = dict(
@@ -80,33 +78,35 @@ SEQ = dict(
   CMD_BOOST = 0x014)
 
 REQ = dict(
-  CMD_PING = [0x00, 0x01, SEQ['CMD_PING'], 0x01],
+  WITH_RESPONSE =[0xff, 0xff],
+  WITHOUT_RESPONSE =[0xff, 0xfe],
+  CMD_PING = [0x00, 0x01],
   CMD_VERSION = [0x00, 0x02],
-  CMD_SET_BT_NAME = [0x00, 0x10, SEQ['CMD_SET_BT_NAME']],
+  CMD_SET_BT_NAME = [0x00, 0x10],
   CMD_GET_BT_NAME = [0x00, 0x11],
-  CMD_SET_AUTO_RECONNECT = [0x00, 0x12, SEQ['CMD_SET_AUTO_RECONNECT'], 0x01],
-  CMD_GET_AUTO_RECONNECT = [0x00, 0x13, SEQ['CMD_GET_AUTO_RECONNECT'], 0x01],
+  CMD_SET_AUTO_RECONNECT = [0x00, 0x12],
+  CMD_GET_AUTO_RECONNECT = [0x00, 0x13],
   CMD_GET_PWR_STATE = [0x00, 0x20],
-  CMD_SET_PWR_NOTIFY = [0x00, 0x21, SEQ['CMD_SET_PWR_NOTIFY'], 0x02],
-  CMD_SLEEP = [0x00, 0x22, SEQ['CMD_SLEEP'], 0x04],
+  CMD_SET_PWR_NOTIFY = [0x00, 0x21],
+  CMD_SLEEP = [0x00, 0x22],
   CMD_GOTO_BL = [0x00, 0x30],
   CMD_RUN_L1_DIAGS = [0x00, 0x40],
   CMD_RUN_L2_DIAGS = [0x00, 0x41],
   CMD_CLEAR_COUNTERS = [0x00, 0x42],
-  CMD_ASSIGN_COUNTER = [0x00, 0x50, SEQ['CMD_ASSIGN_TIME'], 0x05],
-  CMD_POLL_TIMES = [0x00, 0x51, SEQ['CMD_POLL_TIMES'], 0x05],
-  CMD_SET_HEADING = [0x02, 0x01, SEQ['CMD_SET_HEADING'], 0x03],
-  CMD_SET_STABILIZ = [0x02, 0x02, SEQ['CMD_SET_STABILIZ'], 0x02],
-  CMD_SET_ROTATION_RATE = [0x02, 0x03, SEQ['CMD_SET_ROTATION_RATE'], 0x02],
-  CMD_SET_APP_CONFIG_BLK = [0x02, 0x04, SEQ['CMD_SET_APP_CONFIG_BLK'], 0x21],
-  CMD_GET_APP_CONFIG_BLK = [0x02, 0x05, SEQ['CMD_GET_APP_CONFIG_BLK'], 0x05],
-  CMD_SET_DATA_STRM = [0x02, 0x11, SEQ['CMD_SET_DATA_STRM'], 0x0a],
-  CMD_CFG_COL_DET = [0x02, 0x12, SEQ['CMD_CFG_COL_DET'], 0x04],
-  CMD_SET_RGB_LED = [0x02, 0x20, SEQ['CMD_SET_RGB_LED'], 0x05],
-  CMD_SET_BACK_LED = [0x02, 0x21, SEQ['CMD_SET_BACK_LED'], 0x02],
-  CMD_GET_RGB_LED = [0x02, 0x22, SEQ['CMD_GET_RGB_LED'], 0x01],
-  CMD_ROLL = [0x02, 0x30, SEQ['CMD_ROLL'], 0x05],
-  CMD_BOOST = [0x02, 0x31, SEQ['CMD_BOOST'], 0x04],
+  CMD_ASSIGN_COUNTER = [0x00, 0x50],
+  CMD_POLL_TIMES = [0x00, 0x51],
+  CMD_SET_HEADING = [0x02, 0x01],
+  CMD_SET_STABILIZ = [0x02, 0x02],
+  CMD_SET_ROTATION_RATE = [0x02, 0x03],
+  CMD_SET_APP_CONFIG_BLK = [0x02, 0x04],
+  CMD_GET_APP_CONFIG_BLK = [0x02, 0x05],
+  CMD_SET_DATA_STRM = [0x02, 0x11],
+  CMD_CFG_COL_DET = [0x02, 0x12],
+  CMD_SET_RGB_LED = [0x02, 0x20],
+  CMD_SET_BACK_LED = [0x02, 0x21],
+  CMD_GET_RGB_LED = [0x02, 0x22],
+  CMD_ROLL = [0x02, 0x30],
+  CMD_BOOST = [0x02, 0x31],
   CMD_SET_RAW_MOTORS = [0x02, 0x33],
   CMD_SET_MOTION_TO = [0x02, 0x34],
   CMD_GET_CONFIG_BLK = [0x02, 0x40],
@@ -122,35 +122,35 @@ REQ = dict(
   CMD_GET_MACRO_STATUS = [0x02, 0x56],
   CMD_SET_MACRO_STATUS = [0x02, 0x57])
 
-STRM = {
-  0x00000001: 'gyro_h_filtered',
-  0x00000002: 'gyro_m_filtered',
-  0x00000004: 'gyro_l_filtered',
-  0x00000020: 'left_emf_filtered',
-  0x00000040: 'right_emf_filtered',
-  0x00000080: 'mag_z_filtered',
-  0x00000100: 'mag_y_filtered',
-  0x00000200: 'mag_x_filtered',
-  0x00000400: 'gyro_z_filtered',
-  0x00000800: 'gyro_y_filtered',
-  0x00001000: 'gyro_x_filtered', 
-  0x00002000: 'accel_z_filtered',
-  0x00004000: 'accel_y_filtered',
-  0x00008000: 'accel_x_filtered',
-  0x00010000: 'imu_yaw_filtered',
-  0x00020000: 'imu_roll_filtered',
-  0x00040000: 'imu_pitch_filtered',
-  0x00200000: 'left_emf_raw',
-  0x00400000: 'right_emf_raw', 
-  0x00800000: 'mag_z_raw',
-  0x01000000: 'mag_y_raw',
-  0x02000000: 'mag_x_raw',
-  0x04000000: 'gyro_z_raw',
-  0x08000000: 'gyro_y_raw',
-  0x10000000: 'gyro_x_raw',
-  0x20000000: 'accel_z_raw',
-  0x40000000: 'accel_y_raw',
-  0x80000000: 'accel_x_raw'}
+STRM = dict(
+  GYRO_H_FILTERED    = 0x00000001,
+  GYRO_M_FILTERED    = 0x00000002,
+  GYRO_L_FILTERED    = 0x00000004,
+  LEFT_EMF_FILTERED  = 0x00000020,
+  RIGHT_EMF_FILTERED = 0x00000040,
+  MAG_Z_FILTERED     = 0x00000080,
+  MAG_Y_FILTERED     = 0x00000100,
+  MAG_X_FILTERED     = 0x00000200,
+  GYRO_Z_FILTERED    = 0x00000400,
+  GYRO_Y_FILTERED    = 0x00000800,
+  GYRO_X_FILTERED    = 0x00001000,
+  ACCEL_Z_FILTERED   = 0x00002000,
+  ACCEL_Y_FILTERED   = 0x00004000,
+  ACCEL_X_FILTERED   = 0x00008000,
+  IMU_YAW_FILTERED   = 0x00010000,
+  IMU_ROLL_FILTERED  = 0x00020000,
+  IMU_PITCH_FILTERED = 0x00040000,
+  LEFT_EMF_RAW       = 0x00200000,
+  RIGHT_EMF_RAW      = 0x00400000,
+  MAG_Z_RAW          = 0x00800000,
+  MAG_Y_RAW          = 0x01000000,
+  MAG_X_RAW          = 0x02000000,
+  GYRO_Z_RAW         = 0x04000000, 
+  GYRO_Y_RAW         = 0x08000000,
+  GYRO_X_RAW         = 0x10000000,
+  ACCEL_Z_RAW        = 0x20000000,
+  ACCEL_Y_RAW        = 0x40000000,
+  ACCEL_X_RAW        = 0x80000000)  
 
 class BTError(Exception):
   pass
@@ -214,11 +214,29 @@ class Sphero(object):
     self.bt = None
     self.is_connected = False
     self.stream_mask = None
+    self.seq = 0
     self.raw_data_buf = []
     
   def connect(self):
     self.bt = BTInterface(self.target_name)
     self.is_connected = self.bt.connect()
+    time.sleep(0.1)
+  
+  def get_seq(self):
+    self.seq = self.seq + 1
+    if self.seq > 0xff:
+      self.seq = 0
+    return self.seq
+
+  def pack_cmd(self, req ,cmd):
+    return req + [self.get_seq()] + [len(cmd)+1] + cmd
+    
+  def create_mask_list(self, mask):
+    #save the mask
+    self.sample_mask = mask
+    sorted_STRM = sorted(STRM.iteritems(), key=operator.itemgetter(1), reverse=True)
+    #create a list containing the keys that are part of the mask
+    self.mask_list = [key  for key, value in sorted_STRM if value & self.sample_mask]
 
   def ping(self, response):
     """
@@ -227,7 +245,7 @@ class Sphero(object):
 
     :param response: request response back from Sphero.
     """
-    self.send(REQ['CMD_PING'], response)
+    self.send(self.pack_cmd(REQ['CMD_PING'],[]), response)
 
   def get_version(self, response):
     """
@@ -249,8 +267,7 @@ class Sphero(object):
     :param name: 48 character name.
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_SET_BT_NAME'] + [len(name)+1, name]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_SET_BT_NAME'],[name]), response)
 
   def get_bt_name(self, response):
     """
@@ -280,8 +297,7 @@ class Sphero(object):
     enable auto reconnect mode
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_SET_AUTO_RECONNECT'] + [enable, time]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_SET_AUTO_RECONNECT'],[enable,time]), response)
 
   def get_auto_reconnect(self, response):
     """
@@ -290,7 +306,7 @@ class Sphero(object):
     
     :param response: request response back from Sphero.
     """
-    self.send(REQ['CMD_GET_AUTO_RECONNECT'], reponse)
+    self.send(self.pack_cmd(REQ['CMD_GET_AUTO_RECONNECT'],[]), reponse)
 
   def get_power_state(self, reponse):
     """
@@ -312,8 +328,7 @@ class Sphero(object):
     :param enable: 00h to disable and 01h to enable power notifications.
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_SET_PWR_NOTIFY'] + [enable]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_SET_PWR_NOTIFY'],[enable]), response)
 
   def go_to_sleep(time, macro, response):
     """
@@ -327,8 +342,7 @@ class Sphero(object):
     :param macro: macro number to run when re-awakened. 
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_SLEEP'] + [(time>>8), (time & 0xff), macro]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_SLEEP'],[(time>>8), (time & 0xff), macro]), response)
 
   def run_l1_diags(self, response):
     """
@@ -372,8 +386,7 @@ class Sphero(object):
     :param counter: value to set the counter to.
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_ASSIGN_COUNTER'] + [((counter>>24) & 0xff), ((counter>>16) & 0xff), ((counter>>8) & 0xff) ,(counter & 0xff)]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_ASSIGN_COUNTER'],[((counter>>24) & 0xff), ((counter>>16) & 0xff), ((counter>>8) & 0xff) ,(counter & 0xff)]), response)
 
   def poll_packet_times(self, time, response):
     """
@@ -404,8 +417,7 @@ class Sphero(object):
     :param time: client TX time.
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_POLL_TIME'] + [((time>>24) & 0xff), ((time>>16) & 0xff), ((time>>8) & 0xff), (time & 0xff)]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_POLL_TIME'],[((time>>24) & 0xff), ((time>>16) & 0xff), ((time>>8) & 0xff), (time & 0xff)]), response)
 
   def set_heading(self, heading, response):
     """
@@ -418,8 +430,7 @@ class Sphero(object):
     shortest angular distance to heading command)
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_SET_HEADING'] + [(heading>>8),(heading & 0xff)]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_SET_HEADING'],[(heading>>8),(heading & 0xff)]), response)
 
   def set_stablization(self, enable, response):
     """
@@ -431,8 +442,7 @@ class Sphero(object):
     :param enable: 00h for off and 01h for on (on by default).
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_SET_STABILIZ'] + [enable]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_SET_STABILIZ'],[enable]), response)
 
   def set_rotation_rate(self, rate, response):
     """
@@ -448,8 +458,7 @@ class Sphero(object):
 
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_SET_ROTATION_RATE'] + [rate]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_SET_ROTATION_RATE'],[rate]), response)
 
   def set_app_config_blk(self, app_data, response):
     """
@@ -460,8 +469,7 @@ class Sphero(object):
     :param app_data: block set aside for application.
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_SET_APP_CONFIG_BLK'] + [((app_data>>24) & 0xff), ((app_data>>16) & 0xff), ((app_data>>8) & 0xff), (app_data & 0xff)]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_SET_APP_CONFIG_BLK'],[((app_data>>24) & 0xff), ((app_data>>16) & 0xff), ((app_data>>8) & 0xff), (app_data & 0xff)]), response)
 
   def get_app_config_blk(self, response):
     """
@@ -470,7 +478,7 @@ class Sphero(object):
 
     :param response: request response back from Sphero.
     """
-    self.send(REQ['CMD_GET_APP_CONFIG_BLK'], response)
+    self.send(self.pack_cmd(REQ['CMD_GET_APP_CONFIG_BLK'], []), response)
 
   def set_data_strm(self, sample_div, sample_frames, sample_mask, pcnt, response):
     """
@@ -493,13 +501,31 @@ class Sphero(object):
     :param pcnt: packet count (set to 0 for unlimited streaming).
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_SET_DATA_STRM'] + \
-           [(sample_div>>8), (sample_div & 0xff)] + \
-           [(sample_frames>>8), (sample_frames & 0xff)] + \
-           [((sample_mask>>24) & 0xff), ((sample_mask>>16) & 0xff), ((sample_mask>>8) & 0xff), (sample_mask & 0xff)] + \
-           [pcnt]
+    data = self.pack_cmd(REQ['CMD_SET_DATA_STRM'], \
+           [(sample_div>>8), (sample_div & 0xff), (sample_frames>>8), (sample_frames & 0xff), ((sample_mask>>24) & 0xff), ((sample_mask>>16) & 0xff),((sample_mask>>8) & 0xff), (sample_mask & 0xff), pcnt])
+    self.create_mask_list(sample_mask)
     self.stream_mask = sample_mask
     self.send(data, response)
+
+  def set_filtered_data_strm(self, sample_div, sample_frames, pcnt, response):
+    mask = 0
+    for key,value in STRM.iteritems():
+      if 'FILTERED' in key:
+        mask = mask|value
+    self.set_data_strm(sample_div, sample_frames, mask, pcnt, response)
+
+  def set_raw_data_strm(self, sample_div, sample_frames, pcnt, response):
+    mask = 0
+    for key,value in STRM.iteritems():
+      if 'RAW' in key:
+        mask = mask|value
+    self.set_data_strm(sample_div, sample_frames, mask, pcnt, response)
+
+  def set_all_data_strm(self, sample_div, sample_frames, pcnt, response):
+    mask = 0
+    for value in STRM.itervalues():
+        mask = mask|value
+    self.set_data_strm(sample_div, sample_frames, mask, pcnt, response)
   
   def config_collision_detect(magnitude, ignore_time, response):
     """
@@ -516,8 +542,7 @@ class Sphero(object):
     :param ignore_time: time in milliseconds to disable collisions after a
     collision.
     """
-    data = REQ['CMD_CFG_COL_DET'] + [magnitude, (ignore_time>>8), (ignore_time & 0xff)]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_CFG_COL_DET'],[magnitude, (ignore_time>>8), (ignore_time & 0xff)] ), response)
 
   def set_rgb_led(self, red, green, blue, save, response):
     """
@@ -533,8 +558,7 @@ class Sphero(object):
     :param blue: blue color value.
     :param save: 01h for save (color is saved as "user LED color").
     """
-    data = REQ['CMD_SET_RGB_LED'] + [red, green, blue, save]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_SET_RGB_LED'],[red, green, blue, save]), response)
 
   def set_back_led(self, brightness, response):
     """
@@ -544,8 +568,7 @@ class Sphero(object):
     :param brightness: 0-255, off-on (the blue LED on hemisphere of the Sphero).
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_SET_BACK_LED'] + [brightness]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_SET_BACK_LED'],[brightness]), response)
 
   def get_rgb_led(self, response):
     """
@@ -554,8 +577,7 @@ class Sphero(object):
 
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_GET_RGB_LED'] 
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_GET_RGB_LED'],[]), response)
 
   def roll(self, speed, heading, state, response):
     """
@@ -572,8 +594,7 @@ class Sphero(object):
     :param state: 00h for off (braking) and 01h for on (driving). 
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_ROLL'] + [speed, (heading>>8),(heading & 0xff), state]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_ROLL'],[speed, (heading>>8), (heading & 0xff), state]), response)
 
   def boost(self, time, heading, response):
     """
@@ -587,8 +608,7 @@ class Sphero(object):
     :param heading: the heading to travel while boosting.
     :param response: request response back from Sphero.
     """
-    data = REQ['CMD_BOOST'] + [time, (heading>>8), (heading & 0xff)]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_BOOST'], [time, (heading>>8), (heading & 0xff)]), response)
 
   def set_raw_motor_values(l_mode, l_power, r_mode, r_power, response):
     """
@@ -602,8 +622,7 @@ class Sphero(object):
     :param mode: 0x00 - off, 0x01 - forward, 0x02 - reverse, 0x03 - brake, 0x04 - ignored.
     :param power: 0-255 scalar value (units?).
     """
-    data = REQ['CMD_RAW_MOTORS'] + [l_mode, l_power, r_mode, r_power]
-    self.send(data, response)
+    self.send(self.pack_cmd(REQ['CMD_RAW_MOTORS'], [l_mode, l_power, r_mode, r_power]), response)
 
   def send(self, data, response):
     """
@@ -629,9 +648,9 @@ class Sphero(object):
     checksum =~ sum(data) % 256
     #if expecting response back from the sphero
     if response:
-      output = [0xff , 0xff] + data + [checksum]
+      output = REQ['WITH_RESPONSE'] + data + [checksum]
     else:
-      output = [0xff , 0xfe] + data + [checksum]
+      output = REQ['WITHOUT_RESPONSE'] + data + [checksum]
     #pack the msg
     msg = ''.join(struct.pack('B',x) for x in output)
     #send the msg
@@ -639,14 +658,13 @@ class Sphero(object):
 
   def run(self):
     start = time.time()
-    GYRO_Z_FILTERED = 0x0400
-    ACCEL_Z_FILTERED = 0x2000
-    #0x0007e000
-    self.set_data_strm(40, 1, GYRO_Z_FILTERED , 0, False)
+    w = STRM['ACCEL_Z_RAW']|STRM['ACCEL_X_RAW']|STRM['ACCEL_Y_RAW']
+    self.set_raw_data_strm(40, 1 , 0, False)
     while(time.time() < start + 20.0):
+      time.sleep(0.1)
       print "trying to recv"
-      self.recv(2048)
-      time.sleep(0.5)
+      self.recv(512)
+    sys.exit(1)
 
   def data2hexstr(self, data):
     return ' '.join([ ("%02x"%ord(d)) for d in data])
@@ -659,40 +677,33 @@ class Sphero(object):
         # response packet
         data_length = ord(data[3])
         if data_length+4 <= len(data):
+          print "data long enough to parse"
           data_packet = data[:(4+data_length)]
           data = data[(4+data_length):]
           print "Response packet", self.data2hexstr(data_packet)          
+        else:
+          break
       elif data[:2] == [chr(0xff), chr(0xfe)]:
         # streaming packet
-        data_length = (ord(data[3])<<8)+ord(data[4])
+        data_length = (ord(data[3])<<8)+ord(data[4])          
         if data_length+5 <= len(data):
           data_packet = data[:(5+data_length)]
+          self.parse_data_strm(data_packet, data_length)
           data = data[(5+data_length):]
-          print "Streaming packet", self.data2hexstr(data_packet)
+        else:
+          # the remainder of the packet isn't long enough
+          break
       else:
         raise RuntimeError("Bad SOF : " + self.data2hexstr(data))
-      #self.parse_data_strm(raw_data)
     self.raw_data_buf=data
-    print "Left Over data:", self.data2hexstr(self.raw_data_buf)
 
-  def parse_data_strm(self, data):
-
-    data_strm ={}
-    print ' '.join([ ("%02x"%ord(d)) for d in data])
-    #print ord(data[0]),ord(data[1]),ord(data[2]),ord(data[3]),ord(data[4]),ord(data[5]),\
-    #      ord(data[6]),ord(data[7]),ord(data[8]),ord(data[9]),ord(data[10])
-    data_length = (ord(data[3])<<8)+ord(data[4])
-    data_part = data[4:]
-    print "data_strm length:", len(data),"reported data length:", data_length, "measured data length:", len(data_part)
-    #for i in range((data_length-1)/2):
-    #  print i
-#      print (ord(data_part[i])<<8)+ord(data_part[i+1])  
-      #print struct.unpack('h', data_part[i:i+2])
-      #print accel[0], accel[0]/(pow(2.,16))
-#      data_strm[STRM[]] = struct.unpack('h', data_part[i:i+2]) 
-      #print data_strm
-    #print data_strm
-        
+  def parse_data_strm(self, data, data_length):
+    output={}
+    for i in range((data_length-1)/2):
+      unpack = struct.unpack_from('>h', ''.join(data[5+2*i:]))
+      output[self.mask_list[i]] = unpack[0]
+      print self.mask_list[i], unpack[0]
+    print output
 
   def disconnect(self):
     self.bt.close()
