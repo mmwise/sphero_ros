@@ -6,8 +6,11 @@ import sphero_driver
 sphero = sphero_driver.Sphero()
 sphero.connect()
 sphero.set_stablization(0,False)
-sphero.run()
+sphero.start()
+sleep(100)
+sphero.join()
 sphero.disconnect()
+
 
 
 

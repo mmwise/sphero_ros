@@ -36,6 +36,7 @@ import sys
 import struct
 import time
 import operator
+import threading
 
 #These are the message response code that can be return by Sphero.
 MRSP = dict(
@@ -207,7 +208,7 @@ class BTInterface(object):
   def close(self):
     self.sock.close()
 
-class Sphero(object):
+class Sphero(object, threading.Thread):
 
   def __init__(self, target_name = 'Sphero'):
     self.target_name = target_name
@@ -216,6 +217,8 @@ class Sphero(object):
     self.stream_mask = None
     self.seq = 0
     self.raw_data_buf = []
+    self._communication_lock = threading.Lock()
+    self._stream_callback_queue = []
     
   def connect(self):
     self.bt = BTInterface(self.target_name)
@@ -237,6 +240,13 @@ class Sphero(object):
     sorted_STRM = sorted(STRM.iteritems(), key=operator.itemgetter(1), reverse=True)
     #create a list containing the keys that are part of the mask
     self.mask_list = [key  for key, value in sorted_STRM if value & self.sample_mask]
+
+  def add_streaming_callback(self, callback):
+    self._stream_callback_queue.append(callback)
+
+  def remove_streaming_callback(self, callback):
+    if callback in self._stream_callback_queue:
+      self._stream_callback_queue.remove(callback)
 
   def ping(self, response):
     """
@@ -654,7 +664,8 @@ class Sphero(object):
     #pack the msg
     msg = ''.join(struct.pack('B',x) for x in output)
     #send the msg
-    self.bt.send(msg)
+    with self._communication_lock.lock():
+      self.bt.send(msg)
 
   def run(self):
     start = time.time()
@@ -670,7 +681,8 @@ class Sphero(object):
     return ' '.join([ ("%02x"%ord(d)) for d in data])
 
   def recv(self, num_bytes):
-    self.raw_data_buf += self.bt.recv(num_bytes)
+    with self._communication_lock.lock(): 
+
     data = self.raw_data_buf
     while len(data)>5:
       if data[:2] == [chr(0xff),chr(0xff)]:
@@ -690,6 +702,8 @@ class Sphero(object):
           data_packet = data[:(5+data_length)]
           self.parse_data_strm(data_packet, data_length)
           data = data[(5+data_length):]
+          for cb in self._stream_callback_queue:
+            cb(data)
         else:
           # the remainder of the packet isn't long enough
           break
