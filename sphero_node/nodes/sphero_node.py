@@ -70,11 +70,10 @@ class SpheroNode(object):
         self.connect_color_green = rospy.get_param('~connect_green',255)
 
     def start(self):
-
         try:
             self.robot.connect()
         except:
-            pass
+            sys.exit(1)
         self.robot.set_filtered_data_strm(self.sampling_divisor, 1 , 0, False)
         self.robot.add_streaming_callback(self.parse_data)
         self.robot.set_rgb_led(self.connect_color_red,self.connect_color_green,self.connect_color_blue,0,False) #turn the ball green for connection
