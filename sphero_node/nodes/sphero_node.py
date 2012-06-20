@@ -71,6 +71,7 @@ class SpheroNode(object):
             pass
         self.robot.set_filtered_data_strm(self.sampling_divisor, 1 , 0, False)
         self.robot.add_streaming_callback(self.parse_data)
+        self.robot.set_rgb_led(0,255,0,0,False) #turn the ball green for connection
         self.robot.start()
         
     def stop(self):    
