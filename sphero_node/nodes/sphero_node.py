@@ -34,6 +34,9 @@
 import roslib; roslib.load_manifest('sphero_node')
 import rospy
 
+import PyKDL
+import math
+
 from sphero_driver import Sphero
 
 from sensor_msgs.msg import Imu
@@ -45,16 +48,20 @@ class SpheroNode(object):
     def __init__(self, default_update_rate=50.0):
         rospy.init_node('sphero')
         self.default_update_rate = default_update_rate
-        self.sampling_divisor = int(400/default_update_rate)
+        self.sampling_divisor = int(400/self.default_update_rate)
 
         self._init_pubsub()
         self.robot = Sphero()
+        self.imu = Imu(header=rospy.Header(frame_id="imu_link"))
+        self.imu.orientation_covariance = [1e-6, 0, 0, 0, 1e-6, 0, 0, 0, 1e-6]
+        self.imu.angular_velocity_covariance = [1e-6, 0, 0, 0, 1e-6, 0, 0, 0, 1e-6]
+        self.imu.linear_acceleration_covariance = [1e-6, 0, 0, 0, 1e-6, 0, 0, 0, 1e-6]
         
     def _init_pubsub(self):
         self.odom_pub = rospy.Publisher('odom', Odometry)
-        self.odom_pub = rospy.Publisher('imu', Imu)
+        self.imu_pub = rospy.Publisher('imu', Imu)
 
-    def _initi_params(self):
+    def _init_params(self):
         pass
 
     def start(self):
@@ -71,13 +78,29 @@ class SpheroNode(object):
         self.robot.join()
 
     def parse_data(self, data):
-        print "Got data"
-        print data
+        now = rospy.Time.now()
+        self.imu.header.stamp = now
+        (self.imu.orientation.x, self.imu.orientation.y, self.imu.orientation.z, self.imu.orientation.w) = PyKDL.Rotation.RPY(data["IMU_ROLL_FILTERED"]/180.0*math.pi,
+                                                                                                                              data["IMU_PITCH_FILTERED"]/180*math.pi,
+                                                                                                                              data["IMU_YAW_FILTERED"]/180*math.pi).GetQuaternion()
+
+
+        #TODO: Figure out units
+        self.imu.linear_acceleration.x = data["ACCEL_X_FILTERED"]
+        self.imu.linear_acceleration.y = data["ACCEL_Y_FILTERED"]
+        self.imu.linear_acceleration.z = data["ACCEL_Z_FILTERED"]
+        self.imu.angular_velocity.x = data["GYRO_X_FILTERED"]
+        self.imu.angular_velocity.y = data["GYRO_Y_FILTERED"]
+        self.imu.angular_velocity.z = data["GYRO_Z_FILTERED"]
+
+        self.imu_pub.publish(self.imu)
+        #TODO: parse the EMF into something.. 
+    
 
 if __name__ == '__main__':
     s = SpheroNode()
     while not rospy.is_shutdown():
         s.start()
-        s.spin()
+        rospy.spin()
     s.stop()
 
