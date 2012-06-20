@@ -132,7 +132,8 @@ STRM = dict(
   ACCEL_X_RAW        = 0x80000000)  
 
 class BTError(Exception):
-  pass
+  print "No Sphero Device Found."
+  sys.exit(1)
 
 class BTInterface(object):
 
@@ -654,7 +655,7 @@ class Sphero(threading.Thread):
 
   def recv(self, num_bytes):
     while self.is_connected:
-      with self._communication_lock: 
+      with self._communication_lock:
         self.raw_data_buf += self.bt.recv(num_bytes)
       data = self.raw_data_buf
       while len(data)>5:
