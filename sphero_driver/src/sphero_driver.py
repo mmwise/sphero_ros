@@ -198,12 +198,11 @@ class Sphero(threading.Thread):
     self.raw_data_buf = []
     self._communication_lock = threading.Lock()
     self._stream_callback_queue = []
-
-    
+   
   def connect(self):
     self.bt = BTInterface(self.target_name)
     self.is_connected = self.bt.connect()
-    time.sleep(0.1)
+    return True
   
   def get_seq(self):
     self.seq = self.seq + 1
@@ -652,7 +651,6 @@ class Sphero(threading.Thread):
 
   def run(self):
     self.recv(512)
-  
 
   def recv(self, num_bytes):
     while self.is_connected:
@@ -675,7 +673,8 @@ class Sphero(threading.Thread):
           data_length = (ord(data[3])<<8)+ord(data[4])          
           if data_length+5 <= len(data):
             data_packet = data[:(5+data_length)]
-            self.parse_data_strm(data_packet, data_length)
+            for callback in self._stream_callback_queue:
+              callback(self.parse_data_strm(data_packet, data_length))
             data = data[(5+data_length):]
           else:
             # the remainder of the packet isn't long enough
@@ -689,8 +688,9 @@ class Sphero(threading.Thread):
     for i in range((data_length-1)/2):
       unpack = struct.unpack_from('>h', ''.join(data[5+2*i:]))
       output[self.mask_list[i]] = unpack[0]
-      print self.mask_list[i], unpack[0]
-    print output
+#      print self.mask_list[i], unpack[0]
+#    print output
+    return output
 
   def disconnect(self):
     self.is_connected = False
