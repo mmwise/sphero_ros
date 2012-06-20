@@ -41,6 +41,7 @@ from sphero_driver import Sphero
 
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Point, Pose, Quaternion, Twist, TwistWithCovariance, Vector3
 
 
 class SpheroNode(object):
@@ -51,6 +52,7 @@ class SpheroNode(object):
         self.sampling_divisor = int(400/self.default_update_rate)
 
         self._init_pubsub()
+        self._init_params()
         self.robot = Sphero()
         self.imu = Imu(header=rospy.Header(frame_id="imu_link"))
         self.imu.orientation_covariance = [1e-6, 0, 0, 0, 1e-6, 0, 0, 0, 1e-6]
@@ -60,18 +62,22 @@ class SpheroNode(object):
     def _init_pubsub(self):
         self.odom_pub = rospy.Publisher('odom', Odometry)
         self.imu_pub = rospy.Publisher('imu', Imu)
+        self.cmd_vel_sub = rospy.Subscriber('cmd_vel', Twist, self.cmd_vel)
 
     def _init_params(self):
-        pass
+        self.connect_color_red = rospy.get_param('~connect_red',0)
+        self.connect_color_blue = rospy.get_param('~connect_blue',0)
+        self.connect_color_green = rospy.get_param('~connect_green',255)
 
     def start(self):
+
         try:
             self.robot.connect()
         except:
             pass
         self.robot.set_filtered_data_strm(self.sampling_divisor, 1 , 0, False)
         self.robot.add_streaming_callback(self.parse_data)
-        self.robot.set_rgb_led(0,255,0,0,False) #turn the ball green for connection
+        self.robot.set_rgb_led(self.connect_color_red,self.connect_color_green,self.connect_color_blue,0,False) #turn the ball green for connection
         self.robot.start()
         
     def stop(self):    
@@ -96,6 +102,10 @@ class SpheroNode(object):
 
         self.imu_pub.publish(self.imu)
         #TODO: parse the EMF into something.. 
+
+    def cmd_vel(self,msg):
+        #the roll command takes a speed and a heading... not so compatible with twist.. 
+        pass
     
 
 if __name__ == '__main__':
