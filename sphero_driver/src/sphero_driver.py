@@ -186,9 +186,10 @@ class BTInterface(object):
   def close(self):
     self.sock.close()
 
-class Sphero(object, threading.Thread):
+class Sphero(threading.Thread):
 
   def __init__(self, target_name = 'Sphero'):
+    threading.Thread.__init__(self)
     self.target_name = target_name
     self.bt = None
     self.is_connected = False
@@ -646,29 +647,16 @@ class Sphero(object, threading.Thread):
     #pack the msg
     msg = ''.join(struct.pack('B',x) for x in output)
     #send the msg
-    with self._communication_lock.lock():
+    with self._communication_lock:
       self.bt.send(msg)
 
   def run(self):
-    start = time.time()
-    self.set_raw_data_strm(40, 1 , 0, False)
-    self.strm_thread.start()
-    red=0
-    while(time.time() < start + 20.0):
-      time.sleep(0.02)
-      self.set_rgb_led(red,0,0,False)
-      red = red + 0.02
-
-    self.is_connected = False
-    self.strm_thread.join()
-    
-    sys.exit(1)
-
+    self.recv(512)
   
 
   def recv(self, num_bytes):
     while self.is_connected:
-      with self._communication_lock.lock(): 
+      with self._communication_lock: 
         self.raw_data_buf += self.bt.recv(num_bytes)
       data = self.raw_data_buf
       while len(data)>5:
