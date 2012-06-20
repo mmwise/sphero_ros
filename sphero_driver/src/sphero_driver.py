@@ -56,28 +56,6 @@ MRSP = dict(
   ORBOTIX_RSP_CODE_MA_CORRUPT = 0x34,   #Main application corrupt
   ORBOTIX_RSP_CODE_MSG_TIMEOUT = 0x35)  #Msg state machine timed out
 
-SEQ = dict(
-  CMD_PING = 0x01,
-  CMD_SET_BT_NAME = 0x02,
-  CMD_SET_AUTO_RECONNECT = 0x03,
-  CMD_GET_AUTO_RECONNECT = 0x04,
-  CMD_SET_PWR_NOTIFY = 0x05,
-  CMD_SLEEP = 0x06,
-  CMD_ASSIGN_TIME = 0x07,
-  CMD_POLL_TIMES = 0x08,
-  CMD_SET_HEADING = 0x09,
-  CMD_SET_STABILIZ = 0x10,
-  CMD_SET_ROTATION_RATE = 0x00,
-  CMD_SET_APP_CONFIG_BLK = 0x0b,
-  CMD_GET_APP_CONFIG_BLK = 0x0c,
-  CMD_SET_DATA_STRM = 0x0d,
-  CMD_CFG_COL_DET = 0x0f,
-  CMD_SET_RGB_LED = 0x10,
-  CMD_SET_BACK_LED = 0x11,
-  CMD_GET_RGB_LED = 0x012,
-  CMD_ROLL = 0x013,
-  CMD_BOOST = 0x014)
-
 REQ = dict(
   WITH_RESPONSE =[0xff, 0xff],
   WITHOUT_RESPONSE =[0xff, 0xfe],
@@ -219,6 +197,7 @@ class Sphero(object, threading.Thread):
     self.raw_data_buf = []
     self._communication_lock = threading.Lock()
     self._stream_callback_queue = []
+
     
   def connect(self):
     self.bt = BTInterface(self.target_name)
@@ -234,6 +213,9 @@ class Sphero(object, threading.Thread):
   def pack_cmd(self, req ,cmd):
     return req + [self.get_seq()] + [len(cmd)+1] + cmd
     
+  def data2hexstr(self, data):
+    return ' '.join([ ("%02x"%ord(d)) for d in data])
+
   def create_mask_list(self, mask):
     #save the mask
     self.sample_mask = mask
@@ -669,47 +651,50 @@ class Sphero(object, threading.Thread):
 
   def run(self):
     start = time.time()
-    w = STRM['ACCEL_Z_RAW']|STRM['ACCEL_X_RAW']|STRM['ACCEL_Y_RAW']
     self.set_raw_data_strm(40, 1 , 0, False)
+    self.strm_thread.start()
+    red=0
     while(time.time() < start + 20.0):
-      time.sleep(0.1)
-      print "trying to recv"
-      self.recv(512)
+      time.sleep(0.02)
+      self.set_rgb_led(red,0,0,False)
+      red = red + 0.02
+
+    self.is_connected = False
+    self.strm_thread.join()
+    
     sys.exit(1)
 
-  def data2hexstr(self, data):
-    return ' '.join([ ("%02x"%ord(d)) for d in data])
+  
 
   def recv(self, num_bytes):
-    with self._communication_lock.lock(): 
-
-    data = self.raw_data_buf
-    while len(data)>5:
-      if data[:2] == [chr(0xff),chr(0xff)]:
-        # response packet
-        data_length = ord(data[3])
-        if data_length+4 <= len(data):
-          print "data long enough to parse"
-          data_packet = data[:(4+data_length)]
-          data = data[(4+data_length):]
-          print "Response packet", self.data2hexstr(data_packet)          
+    while self.is_connected:
+      with self._communication_lock.lock(): 
+        self.raw_data_buf += self.bt.recv(num_bytes)
+      data = self.raw_data_buf
+      while len(data)>5:
+        if data[:2] == [chr(0xff),chr(0xff)]:
+          # response packet
+          data_length = ord(data[3])
+          if data_length+4 <= len(data):
+            print "data long enough to parse"
+            data_packet = data[:(4+data_length)]
+            data = data[(4+data_length):]
+            print "Response packet", self.data2hexstr(data_packet)          
+          else:
+            break
+        elif data[:2] == [chr(0xff), chr(0xfe)]:
+          # streaming packet
+          data_length = (ord(data[3])<<8)+ord(data[4])          
+          if data_length+5 <= len(data):
+            data_packet = data[:(5+data_length)]
+            self.parse_data_strm(data_packet, data_length)
+            data = data[(5+data_length):]
+          else:
+            # the remainder of the packet isn't long enough
+            break
         else:
-          break
-      elif data[:2] == [chr(0xff), chr(0xfe)]:
-        # streaming packet
-        data_length = (ord(data[3])<<8)+ord(data[4])          
-        if data_length+5 <= len(data):
-          data_packet = data[:(5+data_length)]
-          self.parse_data_strm(data_packet, data_length)
-          data = data[(5+data_length):]
-          for cb in self._stream_callback_queue:
-            cb(data)
-        else:
-          # the remainder of the packet isn't long enough
-          break
-      else:
-        raise RuntimeError("Bad SOF : " + self.data2hexstr(data))
-    self.raw_data_buf=data
+          raise RuntimeError("Bad SOF : " + self.data2hexstr(data))
+      self.raw_data_buf=data
 
   def parse_data_strm(self, data, data_length):
     output={}
@@ -720,6 +705,7 @@ class Sphero(object, threading.Thread):
     print output
 
   def disconnect(self):
-    self.bt.close()
     self.is_connected = False
+    self.bt.close()
+
 
