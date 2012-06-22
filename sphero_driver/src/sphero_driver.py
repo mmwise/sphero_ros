@@ -57,6 +57,20 @@ MRSP = dict(
   ORBOTIX_RSP_CODE_MSG_TIMEOUT = 0x35)  #Msg state machine timed out
 
 
+#ID codes for asynchronous packets
+IDCODE = dict(
+  POWER_NOTIFY = chr(0x01),             #Power notifications
+  LEVEL1_DIAG = chr(0x02),              #Level 1 Diagnostic response
+  DATA_STRM = chr(0x03),                #Sensor data streaming
+  CONFIG_BLOCK = chr(0x04),             #Config block contents
+  SLEEP = chr(0x05),                    #Pre-sleep warning (10 sec)
+  MACRO_MARKERS =chr(0x06),             #Macro markers
+  COLLISION = chr(0x07))                #Collision detected
+
+RECV = dict(
+  ASYNC = [chr(0xff), chr(0xfe)],
+  SYNC = [chr(0xff), chr(0xff)])
+
 
 REQ = dict(
   WITH_RESPONSE =[0xff, 0xff],
@@ -126,12 +140,12 @@ STRM = dict(
   MAG_Z_RAW          = 0x00800000,
   MAG_Y_RAW          = 0x01000000,
   MAG_X_RAW          = 0x02000000,
-  GYRO_Z_RAW         = 0x04000000, 
+  GYRO_Z_RAW         = 0x04000000,
   GYRO_Y_RAW         = 0x08000000,
   GYRO_X_RAW         = 0x10000000,
   ACCEL_Z_RAW        = 0x20000000,
   ACCEL_Y_RAW        = 0x40000000,
-  ACCEL_X_RAW        = 0x80000000)  
+  ACCEL_X_RAW        = 0x80000000)
 
 
 class BTInterface(object):
@@ -155,7 +169,7 @@ class BTInterface(object):
       if len(nearby_devices)>0:
         for bdaddr in nearby_devices:
           if bluetooth.lookup_name(bdaddr) is not None:
-            #look for a device name that starts with Sphero                                                                                               
+            #look for a device name that starts with Sphero
             if bluetooth.lookup_name(bdaddr).startswith(self.target_name):
               self.found_device = True
               self.target_address = bdaddr
@@ -200,12 +214,12 @@ class Sphero(threading.Thread):
     self.raw_data_buf = []
     self._communication_lock = threading.Lock()
     self._stream_callback_queue = []
-   
+
   def connect(self):
     self.bt = BTInterface(self.target_name)
     self.is_connected = self.bt.connect()
     return True
-  
+
   def get_seq(self):
     self.seq = self.seq + 1
     if self.seq > 0xff:
@@ -214,7 +228,7 @@ class Sphero(threading.Thread):
 
   def pack_cmd(self, req ,cmd):
     return req + [self.get_seq()] + [len(cmd)+1] + cmd
-    
+
   def data2hexstr(self, data):
     return ' '.join([ ("%02x"%ord(d)) for d in data])
 
@@ -297,7 +311,7 @@ class Sphero(threading.Thread):
     """
     This returns the Bluetooth auto reconnect values as defined in the
     Set Auto Reconnect command.
-    
+
     :param response: request response back from Sphero.
     """
     self.send(self.pack_cmd(REQ['CMD_GET_AUTO_RECONNECT'],[]), reponse)
@@ -333,7 +347,7 @@ class Sphero(threading.Thread):
     wakeup. If this is set to zero, no macro is executed.
 
     :param time: number of seconds wait before auto re-awake.
-    :param macro: macro number to run when re-awakened. 
+    :param macro: macro number to run when re-awakened.
     :param response: request response back from Sphero.
     """
     self.send(self.pack_cmd(REQ['CMD_SLEEP'],[(time>>8), (time & 0xff), macro]), response)
@@ -376,7 +390,7 @@ class Sphero(threading.Thread):
     when it's not in the Idle state. It has no absolute meaning and is
     reset for various reasons. This command assigns the counter a
     specific value for subsequent sampling.
-    
+
     :param counter: value to set the counter to.
     :param response: request response back from Sphero.
     """
@@ -401,7 +415,7 @@ class Sphero(threading.Thread):
     be computed from the four time stamps T1-T4:
 
     * The value offset represents the maximum-likelihood time offset
-      of the Client clock to Sphero's system clock.  
+      of the Client clock to Sphero's system clock.
         * offset = 1/2*[(T2 - T1) + (T3 - T4)]
 
     * The value delay represents the round-trip delay between the
@@ -520,7 +534,7 @@ class Sphero(threading.Thread):
     for value in STRM.itervalues():
         mask = mask|value
     self.set_data_strm(sample_div, sample_frames, mask, pcnt, response)
-  
+
   def config_collision_detect(magnitude, ignore_time, response):
     """
     This command either enables or disables asynchronous message
@@ -531,8 +545,8 @@ class Sphero(threading.Thread):
     collision detection for a period of time after the async message
     is generated, preventing message overload to the client. The value
     is in milliseconds.
-    
-    :param magnitude: normalize from 0-255 (units?).  
+
+    :param magnitude: normalize from 0-255 (units?).
     :param ignore_time: time in milliseconds to disable collisions after a
     collision.
     """
@@ -558,7 +572,7 @@ class Sphero(threading.Thread):
     """
     This allows you to control the brightness of the back LED. The
     value does not persist across power cycles.
-    
+
     :param brightness: 0-255, off-on (the blue LED on hemisphere of the Sphero).
     :param response: request response back from Sphero.
     """
@@ -585,7 +599,7 @@ class Sphero(threading.Thread):
 
     :param speed: 0-255 value representing 0-max speed of the sphero.
     :param heading: heading in degrees from 0 to 359.
-    :param state: 00h for off (braking) and 01h for on (driving). 
+    :param state: 00h for off (braking) and 01h for on (driving).
     :param response: request response back from Sphero.
     """
     self.send(self.pack_cmd(REQ['CMD_ROLL'],[speed, (heading>>8), (heading & 0xff), state]), response)
@@ -612,7 +626,7 @@ class Sphero(threading.Thread):
     a power value from 0- 255. This command will disable stabilization
     if both modes aren't "ignore" so you'll need to re-enable it via
     CID 02h once you're done.
-    
+
     :param mode: 0x00 - off, 0x01 - forward, 0x02 - reverse, 0x03 - brake, 0x04 - ignored.
     :param power: 0-255 scalar value (units?).
     """
@@ -627,12 +641,12 @@ class Sphero(threading.Thread):
 
     * SOP1 - start packet 1 - Always 0xff.  SOP2 - start packet 2 -
     * Set to 0xff when an acknowledgement is expected, 0xfe otherwise.
-    * DID - Device ID 
-    * CID - Command ID 
-    * SEQ - Sequence Number - This client field is echoed in the 
-      response for all synchronous commands (and ignored by Sphero when SOP2 = 0xfe) 
+    * DID - Device ID
+    * CID - Command ID
+    * SEQ - Sequence Number - This client field is echoed in the
+      response for all synchronous commands (and ignored by Sphero when SOP2 = 0xfe)
     * DLEN - Data
-    * Length - Number of bytes through the end of the packet.  
+    * Length - Number of bytes through the end of the packet.
     * <data>
     * CHK - Checksum - The modulo 256 sum of all the bytes from the
       DID through the end of the data payload, bit inverted (1's complement).
@@ -667,12 +681,12 @@ class Sphero(threading.Thread):
             print "data long enough to parse"
             data_packet = data[:(4+data_length)]
             data = data[(4+data_length):]
-            print "Response packet", self.data2hexstr(data_packet)          
+            print "Response packet", self.data2hexstr(data_packet)
           else:
             break
         elif data[:2] == [chr(0xff), chr(0xfe)]:
           # streaming packet
-          data_length = (ord(data[3])<<8)+ord(data[4])          
+          data_length = (ord(data[3])<<8)+ord(data[4])
           if data_length+5 <= len(data):
             data_packet = data[:(5+data_length)]
             for callback in self._stream_callback_queue:
