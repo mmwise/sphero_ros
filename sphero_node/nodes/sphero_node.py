@@ -83,7 +83,7 @@ class SpheroNode(object):
         self.robot.set_filtered_data_strm(self.sampling_divisor, 1 , 0, False)
         self.robot.add_streaming_callback(self.parse_data)
         self.robot.set_rgb_led(self.connect_color_red,self.connect_color_green,self.connect_color_blue,0,False) #turn the ball green for connection
-        self.robot.set_stablization(0,False)
+        self.robot.set_stablization(1,False)
         self.robot.start()
 
     def spin(self):
@@ -112,9 +112,9 @@ class SpheroNode(object):
 
 
         #TODO: Figure out units
-        self.imu.linear_acceleration.x = data["ACCEL_X_FILTERED"]/4096
-        self.imu.linear_acceleration.y = data["ACCEL_Y_FILTERED"]/4096
-        self.imu.linear_acceleration.z = data["ACCEL_Z_FILTERED"]/4096
+        self.imu.linear_acceleration.x = data["ACCEL_X_FILTERED"]/4096.0*9.8
+        self.imu.linear_acceleration.y = data["ACCEL_Y_FILTERED"]/4096.0*9.8
+        self.imu.linear_acceleration.z = data["ACCEL_Z_FILTERED"]/4096.0*9.8
         self.imu.angular_velocity.x = data["GYRO_X_FILTERED"]
         self.imu.angular_velocity.y = data["GYRO_Y_FILTERED"]
         self.imu.angular_velocity.z = data["GYRO_Z_FILTERED"]

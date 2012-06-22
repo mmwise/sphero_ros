@@ -736,8 +736,6 @@ class Sphero(threading.Thread):
     for i in range((data_length-1)/2):
       unpack = struct.unpack_from('>h', ''.join(data[5+2*i:]))
       output[self.mask_list[i]] = unpack[0]
-#      print self.mask_list[i], unpack[0]
-#    print output
     return output
 
   def disconnect(self):
