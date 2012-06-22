@@ -56,6 +56,8 @@ MRSP = dict(
   ORBOTIX_RSP_CODE_MA_CORRUPT = 0x34,   #Main application corrupt
   ORBOTIX_RSP_CODE_MSG_TIMEOUT = 0x35)  #Msg state machine timed out
 
+
+
 REQ = dict(
   WITH_RESPONSE =[0xff, 0xff],
   WITHOUT_RESPONSE =[0xff, 0xfe],
@@ -131,9 +133,6 @@ STRM = dict(
   ACCEL_Y_RAW        = 0x40000000,
   ACCEL_X_RAW        = 0x80000000)  
 
-class BTError(Exception):
-  print "No Sphero Device Found."
-  sys.exit(1)
 
 class BTInterface(object):
 
@@ -148,29 +147,31 @@ class BTInterface(object):
   def connect(self):
     sys.stdout.write("Searching for devices....")
     sys.stdout.flush()
-    nearby_devices = bluetooth.discover_devices()
 
-    while(self.tries < 5):
+    for i in range(5):
+      sys.stdout.write("....")
+      sys.stdout.flush()
+      nearby_devices = bluetooth.discover_devices()
       if len(nearby_devices)>0:
         for bdaddr in nearby_devices:
           if bluetooth.lookup_name(bdaddr) is not None:
-            print bluetooth.lookup_name(bdaddr)
-            #look for a device name that starts with Sphero
+            #look for a device name that starts with Sphero                                                                                               
             if bluetooth.lookup_name(bdaddr).startswith(self.target_name):
               self.found_device = True
               self.target_address = bdaddr
               break
-      if self.found_device:      
+      if self.found_device:
         break
-      self.tries = self.tries + 1     
-      sys.stdout.write("....")
-      sys.stdout.flush()
+
 
     if self.target_address is not None:
       sys.stdout.write("\nFound Sphero device with address: %s\n" %  (self.target_address))
       sys.stdout.flush()
     else:
-      raise BTError("No Sphero devices found.")
+      sys.stdout.write("\nNo Sphero devices found.\n" )
+      sys.stdout.flush()
+      sys.exit(1)
+
 
     self.sock=bluetooth.BluetoothSocket(bluetooth.RFCOMM)
     self.sock.connect((bdaddr,self.port))
