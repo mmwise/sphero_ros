@@ -59,7 +59,7 @@ MRSP = dict(
 
 #ID codes for asynchronous packets
 IDCODE = dict(
-  POWER_NOTIFY = chr(0x01),             #Power notifications
+  PWR_NOTIFY = chr(0x01),               #Power notifications
   LEVEL1_DIAG = chr(0x02),              #Level 1 Diagnostic response
   DATA_STRM = chr(0x03),                #Sensor data streaming
   CONFIG_BLOCK = chr(0x04),             #Config block contents
@@ -166,6 +166,7 @@ class BTInterface(object):
       sys.stdout.write("....")
       sys.stdout.flush()
       nearby_devices = bluetooth.discover_devices()
+  
       if len(nearby_devices)>0:
         for bdaddr in nearby_devices:
           if bluetooth.lookup_name(bdaddr) is not None:
@@ -186,9 +187,11 @@ class BTInterface(object):
       sys.stdout.flush()
       sys.exit(1)
 
-
-    self.sock=bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-    self.sock.connect((bdaddr,self.port))
+    try:
+      self.sock=bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+      self.sock.connect((bdaddr,self.port))
+    except:
+      sys.exit(1)
     sys.stdout.write("Paired with Sphero.\n")
     sys.stdout.flush()
     return True
@@ -213,21 +216,22 @@ class Sphero(threading.Thread):
     self.seq = 0
     self.raw_data_buf = []
     self._communication_lock = threading.Lock()
-    self._stream_callback_queue = []
+    self._async_callback_dict = dict()
 
   def connect(self):
     self.bt = BTInterface(self.target_name)
     self.is_connected = self.bt.connect()
     return True
 
-  def get_seq(self):
+  def inc_seq(self):
     self.seq = self.seq + 1
     if self.seq > 0xff:
       self.seq = 0
-    return self.seq
 
   def pack_cmd(self, req ,cmd):
-    return req + [self.get_seq()] + [len(cmd)+1] + cmd
+    self.inc_seq()
+ #   print req + [self.seq] + [len(cmd)+1] + cmd
+    return req + [self.seq] + [len(cmd)+1] + cmd
 
   def data2hexstr(self, data):
     return ' '.join([ ("%02x"%ord(d)) for d in data])
@@ -239,12 +243,11 @@ class Sphero(threading.Thread):
     #create a list containing the keys that are part of the mask
     self.mask_list = [key  for key, value in sorted_STRM if value & self.sample_mask]
 
-  def add_streaming_callback(self, callback):
-    self._stream_callback_queue.append(callback)
+  def add_async_callback(self, callback_type, callback):
+    self._async_callback_dict[callback_type] = callback
 
-  def remove_streaming_callback(self, callback):
-    if callback in self._stream_callback_queue:
-      self._stream_callback_queue.remove(callback)
+  def remove_async_callback(self, callback_type):
+    del self._async_callback_dict[callback_type]
 
   def ping(self, response):
     """
@@ -262,7 +265,7 @@ class Sphero(threading.Thread):
 
     :param response: request response back from Sphero.
     """
-    self.send(REQ['CMD_VERSION'], response)
+    self.send(self.pack_cmd(REQ['CMD_VERSION'],[]), response)
 
   def set_device_name(self, name, response):
     """
@@ -287,7 +290,7 @@ class Sphero(threading.Thread):
 
     :param response: request response back from Sphero.
     """
-    self.send(REQ['CMD_GET_BT_NAME'], response)
+    self.send(self.pack_cmd(REQ['CMD_GET_BT_NAME'],[]), response)
 
   def set_auto_reconnect(self, enable, time, response):
     """
@@ -316,16 +319,16 @@ class Sphero(threading.Thread):
     """
     self.send(self.pack_cmd(REQ['CMD_GET_AUTO_RECONNECT'],[]), reponse)
 
-  def get_power_state(self, reponse):
+  def get_power_state(self, response):
     """
     This returns the current power state and some additional
     parameters to the Client.
 
     :param response: request response back from Sphero.
     """
-    self.send(REQ['CMD_GET_PWR_STATE'], response)
+    self.send(self.pack_cmd(REQ['CMD_GET_PWR_STATE'],[]), response)
 
-  def set_power_notify(self, response):
+  def set_power_notify(self, enable, response):
     """
     This enables Sphero to asynchronously notify the Client
     periodically with the power state or immediately when the power
@@ -338,7 +341,7 @@ class Sphero(threading.Thread):
     """
     self.send(self.pack_cmd(REQ['CMD_SET_PWR_NOTIFY'],[enable]), response)
 
-  def go_to_sleep(time, macro, response):
+  def go_to_sleep(self, time, macro, response):
     """
     This puts Sphero to sleep immediately with two parameters: the
     first is the number of seconds after which it will automatically
@@ -362,7 +365,7 @@ class Sphero(threading.Thread):
 
     :param response: request response back from Sphero.
     """
-    self.send(REQ['CMD_RUN_L1_DIAGS'], response)
+    self.send(self.pack_cmd(REQ['CMD_RUN_L1_DIAGS'],[]), response)
 
   def run_l2_diags(self, response):
     """
@@ -373,7 +376,7 @@ class Sphero(threading.Thread):
 
     :param response: request response back from Sphero.
     """
-    self.send(REQ['CMD_RUN_L2_DIAGS'], reponse)
+    self.send(self.pack_cmd(REQ['CMD_RUN_L2_DIAGS'],[]), response)
 
   def clear_counters(self, response):
     """
@@ -382,7 +385,7 @@ class Sphero(threading.Thread):
 
     :param response: request response back from Sphero.
     """
-    self.send(REQ['CMD_CLEAR_COUNTERS'], response)
+    self.send(self.pack_cmd(REQ['CMD_CLEAR_COUNTERS'],[]), response)
 
   def assign_counter_value(self, counter, response):
     """
@@ -510,7 +513,8 @@ class Sphero(threading.Thread):
     :param response: request response back from Sphero.
     """
     data = self.pack_cmd(REQ['CMD_SET_DATA_STRM'], \
-           [(sample_div>>8), (sample_div & 0xff), (sample_frames>>8), (sample_frames & 0xff), ((sample_mask>>24) & 0xff), ((sample_mask>>16) & 0xff),((sample_mask>>8) & 0xff), (sample_mask & 0xff), pcnt])
+           [(sample_div>>8), (sample_div & 0xff), (sample_frames>>8), (sample_frames & 0xff), ((sample_mask>>24) & 0xff), \
+              ((sample_mask>>16) & 0xff),((sample_mask>>8) & 0xff), (sample_mask & 0xff), pcnt])
     self.create_mask_list(sample_mask)
     self.stream_mask = sample_mask
     self.send(data, response)
@@ -535,7 +539,7 @@ class Sphero(threading.Thread):
         mask = mask|value
     self.set_data_strm(sample_div, sample_frames, mask, pcnt, response)
 
-  def config_collision_detect(magnitude, ignore_time, response):
+  def config_collision_detect(self, magnitude, ignore_time, response):
     """
     This command either enables or disables asynchronous message
     generation when a collision is detected. The magnitude parameter
@@ -550,7 +554,7 @@ class Sphero(threading.Thread):
     :param ignore_time: time in milliseconds to disable collisions after a
     collision.
     """
-    self.send(self.pack_cmd(REQ['CMD_CFG_COL_DET'],[magnitude, (ignore_time>>8), (ignore_time & 0xff)] ), response)
+    self.send(self.pack_cmd(REQ['CMD_CFG_COL_DET'],[magnitude, (ignore_time>>8), (ignore_time & 0xff)]), response)
 
   def set_rgb_led(self, red, green, blue, save, response):
     """
@@ -618,7 +622,7 @@ class Sphero(threading.Thread):
     """
     self.send(self.pack_cmd(REQ['CMD_BOOST'], [time, (heading>>8), (heading & 0xff)]), response)
 
-  def set_raw_motor_values(l_mode, l_power, r_mode, r_power, response):
+  def set_raw_motor_values(self, l_mode, l_power, r_mode, r_power, response):
     """
     This allows you to take over one or both of the motor output
     values, instead of having the stabilization system control
@@ -666,7 +670,8 @@ class Sphero(threading.Thread):
       self.bt.send(msg)
 
   def run(self):
-    self.recv(512)
+    # this is larger than any single packet
+    self.recv(1024)
 
   def recv(self, num_bytes):
     '''
@@ -697,7 +702,7 @@ class Sphero(threading.Thread):
     * ID CODE - ID Code - See the IDCODE dict
     * DLEN-MSB - Data Length MSB - The MSB  number of bytes following through the end of the packet
     * DLEN-LSB - Data Length LSB - The LSB  number of bytes following through the end of the packet
-    * <data>                                                                                                                                                 * CHK - Checksum - - The modulo 256 sum of all the bytes from the DID through the end of the data payload, bit inverted (1's complement)
+    * <data>                                                                                                                           * CHK - Checksum - - The modulo 256 sum of all the bytes from the DID through the end of the data payload, bit inverted (1's complement)
     '''
 
     while self.is_connected:
@@ -706,30 +711,50 @@ class Sphero(threading.Thread):
       data = self.raw_data_buf
       while len(data)>5:
         if data[:2] == RECV['SYNC']:
+          print "got response packet"
           # response packet
-          data_length = ord(data[3])
-          if data_length+4 <= len(data):
-            print "data long enough to parse"
-            data_packet = data[:(4+data_length)]
-            data = data[(4+data_length):]
+          data_length = ord(data[4])
+          if data_length+5 <= len(data):
+            data_packet = data[:(5+data_length)]
+            data = data[(5+data_length):]
             print "Response packet", self.data2hexstr(data_packet)
           else:
             break
         elif data[:2] == RECV['ASYNC']:
-          if data[2]==IDCODE['DATA_STRM']:
-          # streaming packet
-            data_length = (ord(data[3])<<8)+ord(data[4])
-            if data_length+5 <= len(data):
-              data_packet = data[:(5+data_length)]
-              for callback in self._stream_callback_queue:
-                callback(self.parse_data_strm(data_packet, data_length))
-              data = data[(5+data_length):]
-            else:
-              # the remainder of the packet isn't long enough
-              break
+          data_length = (ord(data[3])<<8)+ord(data[4])
+          if data_length+5 <= len(data):
+            data_packet = data[:(5+data_length)]
+            data = data[(5+data_length):]
+          else:
+            # the remainder of the packet isn't long enough
+            break
+#          print data_packet[2]
+          if data_packet[2]==IDCODE['DATA_STRM'] and self._async_callback_dict.has_key(IDCODE['DATA_STRM']):
+            self._async_callback_dict[IDCODE['DATA_STRM']](self.parse_data_strm(data_packet, data_length))
+          elif data_packet[2]==IDCODE['COLLISION'] and self._async_callback_dict.has_key(IDCODE['COLLISION']):
+            print "in collision detect"
+            self._async_callback_dict[IDCODE['COLLISION']](self.parse_collision_detect(data_packet, data_length))
+          elif data_packet[2]==IDCODE['PWR_NOTIFY'] and self._async_callback_dict.has_key(IDCODE['PWR_NOTIFY']):
+            self._async_callback_dict[IDCODE['PWR_NOTIFY']](self.parse_pwr_notify(data_packet, data_length))
+          else:
+            print "got a packet that isn't streaming"
         else:
           raise RuntimeError("Bad SOF : " + self.data2hexstr(data))
       self.raw_data_buf=data
+
+  def parse_pwr_notify(self, data, data_length):
+    return struct.unpack_from('B', ''.join(data[5:]))[0]
+
+  def parse_collision_detect(self, data, data_length):
+    output={}
+    print "parsing collision"
+    output['MAG'] = struct.unpack_from('>h', ''.join(data[5+1:]))
+    output['HEADING'] = struct.unpack_from('>h', ''.join(data[5+3:]))
+    output['PITCH'] = struct.unpack_from('>h', ''.join(data[5+4:]))
+    output['SPEED'] = struct.unpack_from('>h', ''.join(data[5+5:]))
+    output['TIME'] = struct.unpack_from('>h', ''.join(data[5+9:]))
+    print output
+    return output
 
   def parse_data_strm(self, data, data_length):
     output={}
@@ -737,6 +762,7 @@ class Sphero(threading.Thread):
       unpack = struct.unpack_from('>h', ''.join(data[5+2*i:]))
       output[self.mask_list[i]] = unpack[0]
     return output
+
 
   def disconnect(self):
     self.is_connected = False

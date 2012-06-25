@@ -36,7 +36,7 @@
     <visual>
       <origin xyz=" 0 0 0" rpy="0 0 0" />
       <geometry>
-	<mesh filename="package://sphero_description/meshes/SpheroModel.dae" scale=" 0.0254 0.0254 0.0254"/>
+	<mesh filename="package://sphero_description/meshes/Sphero.dae" scale=" 0.0254 0.0254 0.0254"/>
       </geometry>
     </visual>
 
