@@ -17,12 +17,6 @@
          iyy="0.0" iyz="0.0" izz="0.0" />
     </inertial>
 
-    <collision>
-      <origin xyz="0 0 0.017" rpy="0 0 0" />
-      <geometry>
-       <box size="0.001 0.001 0.001" />
-      </geometry>
-    </collision>
   </link>
 
 <link name="base_link">
@@ -36,22 +30,22 @@
     <visual>
       <origin xyz=" 0 0 0" rpy="0 0 0" />
       <geometry>
-	<mesh filename="package://sphero_description/meshes/Sphero.dae" scale=" 0.0254 0.0254 0.0254"/>
+	<mesh filename="package://sphero_description/meshes/Sphero_Textured.dae" scale=" 0.0127 0.0127 0.0127"/>
       </geometry>
     </visual>
 
     <collision>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <sphere radius="0.04"/>
+        <sphere radius="0.0381"/>
       </geometry>
     </collision>
   </link>
 
   <joint name="base_footprint_joint" type="fixed">
-    <origin xyz="0 0 0.02" rpy="0 0 0" />
-    <parent link="base_footprint"/>
-    <child link="base_link" />
+    <origin xyz="0 0 -0.0381" rpy="0 0 0" />
+    <parent link="base_link"/>
+    <child link="base_footprint" />
   </joint>
 
 
