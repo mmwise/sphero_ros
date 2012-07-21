@@ -728,11 +728,9 @@ class Sphero(threading.Thread):
           else:
             # the remainder of the packet isn't long enough
             break
-#          print data_packet[2]
           if data_packet[2]==IDCODE['DATA_STRM'] and self._async_callback_dict.has_key(IDCODE['DATA_STRM']):
             self._async_callback_dict[IDCODE['DATA_STRM']](self.parse_data_strm(data_packet, data_length))
           elif data_packet[2]==IDCODE['COLLISION'] and self._async_callback_dict.has_key(IDCODE['COLLISION']):
-            print "in collision detect"
             self._async_callback_dict[IDCODE['COLLISION']](self.parse_collision_detect(data_packet, data_length))
           elif data_packet[2]==IDCODE['PWR_NOTIFY'] and self._async_callback_dict.has_key(IDCODE['PWR_NOTIFY']):
             self._async_callback_dict[IDCODE['PWR_NOTIFY']](self.parse_pwr_notify(data_packet, data_length))
