@@ -111,7 +111,7 @@ class SpheroNode(object):
         self.robot.set_power_notify(True, False)
         self.robot.add_async_callback(sphero_driver.IDCODE['PWR_NOTIFY'], self.parse_power_notify)
         #setup collision detection
-        self.robot.config_collision_detect(3,100,False)
+        self.robot.config_collision_detect(1, 45, 110, 45, 110, 100, False)
         self.robot.add_async_callback(sphero_driver.IDCODE['COLLISION'], self.parse_collision)
         #set the ball to connection color
         self.robot.set_rgb_led(self.connect_color_red,self.connect_color_green,self.connect_color_blue,0,False)
@@ -123,7 +123,7 @@ class SpheroNode(object):
         while not rospy.is_shutdown():
             now = rospy.Time.now()
             if  (now - self.last_cmd_vel_time) > self.cmd_vel_timeout:
-                if self.cmd_heading !=0 and self.cmd_speed!=0:
+                if self.cmd_heading != 0 and self.cmd_speed != 0:
                     self.cmd_heading = 0
                     self.cmd_speed = 0
                     self.robot.roll(int(self.cmd_speed),int(self.cmd_heading),0,False)
@@ -131,8 +131,11 @@ class SpheroNode(object):
                 self.last_diagnostics_time = now
                 self.publish_diagnostics(now)
             r.sleep()
+            
         
     def stop(self):    
+        self.robot.shutdown = True
+        rospy.sleep(1.0)
         self.robot.disconnect()
         self.robot.join()
 
@@ -212,6 +215,9 @@ class SpheroNode(object):
         if self.is_connected:
             rate = int((msg.data*180/math.pi)/0.784)
             self.robot.set_rotation_rate(rate, False)
+
+    def configure_collision_detect(self, msg):
+        pass
 
 
 

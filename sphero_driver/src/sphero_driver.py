@@ -211,6 +211,7 @@ class Sphero(threading.Thread):
     threading.Thread.__init__(self)
     self.target_name = target_name
     self.bt = None
+    self.shutdown = False
     self.is_connected = False
     self.stream_mask = None
     self.seq = 0
@@ -539,22 +540,27 @@ class Sphero(threading.Thread):
         mask = mask|value
     self.set_data_strm(sample_div, sample_frames, mask, pcnt, response)
 
-  def config_collision_detect(self, magnitude, ignore_time, response):
+  def config_collision_detect(self, method, Xt, Xspd, Yt, Yspd, ignore_time, response):
     """
     This command either enables or disables asynchronous message
-    generation when a collision is detected. The magnitude parameter
-    is the minimum normalized magnitude that the collision must equal
-    in order to be "detected" and generate a message. A value of 00h
-    disables this feature. The Ignore Time parameter disables
-    collision detection for a period of time after the async message
-    is generated, preventing message overload to the client. The value
-    is in milliseconds.
+    generation when a collision is detected.The Ignore Time parameter
+    disables collision detection for a period of time after the async
+    message is generated, preventing message overload to the
+    client. The value is in 10 millisecond increments.
 
-    :param magnitude: normalize from 0-255 (units?).
-    :param ignore_time: time in milliseconds to disable collisions after a
-    collision.
+    :param method: Detection method type to use. Currently the only
+    method supported is 01h. Use 00h to completely disable this
+    service.
+    :param Xt, Yt: An 8-bit settable threshold for the X (left/right)
+    and Y (front/back) axes of Sphero. A value of 00h disables the
+    contribution of that axis.
+    :param Xspd,Yspd: An 8-bit settable speed value for the X and Y
+    axes. This setting is ranged by the speed, then added to Xt, Yt to
+    generate the final threshold value.
+    :param ignore_time:An 8-bit post-collision dead time to prevent
+    retriggering; specified in 10ms increments.
     """
-    self.send(self.pack_cmd(REQ['CMD_CFG_COL_DET'],[magnitude, (ignore_time>>8), (ignore_time & 0xff)]), response)
+    self.send(self.pack_cmd(REQ['CMD_CFG_COL_DET'],[method, Xt, Xspd, Yt, Yspd, ignore_time]), response)
 
   def set_rgb_led(self, red, green, blue, save, response):
     """
@@ -705,7 +711,7 @@ class Sphero(threading.Thread):
     * <data>                                                                                                                           * CHK - Checksum - - The modulo 256 sum of all the bytes from the DID through the end of the data payload, bit inverted (1's complement)
     '''
 
-    while self.is_connected:
+    while self.is_connected and not self.shutdown:
       with self._communication_lock:
         self.raw_data_buf += self.bt.recv(num_bytes)
       data = self.raw_data_buf
@@ -746,12 +752,12 @@ class Sphero(threading.Thread):
   def parse_collision_detect(self, data, data_length):
     output={}
     print "parsing collision"
-    output['MAG'] = struct.unpack_from('>h', ''.join(data[5+1:]))
-    output['HEADING'] = struct.unpack_from('>h', ''.join(data[5+3:]))
-    output['PITCH'] = struct.unpack_from('>h', ''.join(data[5+4:]))
-    output['SPEED'] = struct.unpack_from('>h', ''.join(data[5+5:]))
-    output['TIME'] = struct.unpack_from('>h', ''.join(data[5+9:]))
-    print output
+#    output['MAG'] = struct.unpack_from('>h', ''.join(data[5+1:]))
+#    output['HEADING'] = struct.unpack_from('>h', ''.join(data[5+3:]))
+#    output['PITCH'] = struct.unpack_from('>h', ''.join(data[5+4:]))
+#    output['SPEED'] = struct.unpack_from('>h', ''.join(data[5+5:]))
+#    output['TIME'] = struct.unpack_from('>h', ''.join(data[5+9:]))
+#    print output
     return output
 
   def parse_data_strm(self, data, data_length):
