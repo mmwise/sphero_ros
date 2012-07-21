@@ -124,9 +124,10 @@ class SpheroNode(object):
             now = rospy.Time.now()
             if  (now - self.last_cmd_vel_time) > self.cmd_vel_timeout:
                 if self.cmd_heading != 0 and self.cmd_speed != 0:
+                    rospy.logerr("trying to timeout")
                     self.cmd_heading = 0
                     self.cmd_speed = 0
-                    self.robot.roll(int(self.cmd_speed),int(self.cmd_heading),0,False)
+                    self.robot.roll(int(self.cmd_speed),int(self.cmd_heading),1,False)
             if (now - self.last_diagnostics_time) > self.diag_update_rate:
                 self.last_diagnostics_time = now
                 self.publish_diagnostics(now)
