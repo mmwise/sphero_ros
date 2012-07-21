@@ -81,12 +81,12 @@ class SpheroNode(object):
         self.odom_pub = rospy.Publisher('odom', Odometry)
         self.imu_pub = rospy.Publisher('imu', Imu)
         self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
-        self.cmd_vel_sub = rospy.Subscriber('cmd_vel', Twist, self.cmd_vel)
-        self.color_sub = rospy.Subscriber('set_color', ColorRGBA, self.set_color)
-        self.back_led_sub = rospy.Subscriber('set_back_led', Float32, self.set_back_led)
-        self.stabilization_sub = rospy.Subscriber('disable_stabilization', Bool, self.set_stabilization)
-        self.heading_sub = rospy.Subscriber('set_heading', Float32, self.set_heading)
-        self.angular_velocity_sub = rospy.Subscriber('set_angular_velocity', Float32, self.set_angular_velocity)
+        self.cmd_vel_sub = rospy.Subscriber('cmd_vel', Twist, self.cmd_vel, queue_size = 1)
+        self.color_sub = rospy.Subscriber('set_color', ColorRGBA, self.set_color, queue_size = 1)
+        self.back_led_sub = rospy.Subscriber('set_back_led', Float32, self.set_back_led, queue_size = 1)
+        self.stabilization_sub = rospy.Subscriber('disable_stabilization', Bool, self.set_stabilization, queue_size = 1)
+        self.heading_sub = rospy.Subscriber('set_heading', Float32, self.set_heading, queue_size = 1)
+        self.angular_velocity_sub = rospy.Subscriber('set_angular_velocity', Float32, self.set_angular_velocity, queue_size = 1)
 
     def _init_params(self):
         self.connect_color_red = rospy.get_param('~connect_red',0)
@@ -124,7 +124,6 @@ class SpheroNode(object):
             now = rospy.Time.now()
             if  (now - self.last_cmd_vel_time) > self.cmd_vel_timeout:
                 if self.cmd_heading != 0 and self.cmd_speed != 0:
-                    rospy.logerr("trying to timeout")
                     self.cmd_heading = 0
                     self.cmd_speed = 0
                     self.robot.roll(int(self.cmd_speed),int(self.cmd_heading),1,False)
@@ -132,8 +131,7 @@ class SpheroNode(object):
                 self.last_diagnostics_time = now
                 self.publish_diagnostics(now)
             r.sleep()
-            
-        
+                    
     def stop(self):    
         self.robot.shutdown = True
         rospy.sleep(1.0)
@@ -162,24 +160,25 @@ class SpheroNode(object):
         self.power_state_msg = self.battery_state[data]
 
     def parse_data_strm(self, data):
-        now = rospy.Time.now()
-        imu = Imu(header=rospy.Header(frame_id="imu_link"))
-        imu.header.stamp = now
-        (imu.orientation.x, imu.orientation.y, imu.orientation.z, imu.orientation.w) = PyKDL.Rotation.RPY(data["IMU_ROLL_FILTERED"]/180.0*math.pi,
-                                                                                                          data["IMU_PITCH_FILTERED"]/180*math.pi,
-                                                                                                          data["IMU_YAW_FILTERED"]/180*math.pi).GetQuaternion()
+        if self.is_connected:
+            now = rospy.Time.now()
+            imu = Imu(header=rospy.Header(frame_id="imu_link"))
+            imu.header.stamp = now
+            (imu.orientation.x, imu.orientation.y, imu.orientation.z, imu.orientation.w) = PyKDL.Rotation.RPY(data["IMU_ROLL_FILTERED"]/180.0*math.pi,
+                                                                                                              data["IMU_PITCH_FILTERED"]/180*math.pi,
+                                                                                                              data["IMU_YAW_FILTERED"]/180*math.pi).GetQuaternion()
 
 
         #TODO: Figure out units
-        imu.linear_acceleration.x = data["ACCEL_X_FILTERED"]/4096.0*9.8
-        imu.linear_acceleration.y = data["ACCEL_Y_FILTERED"]/4096.0*9.8
-        imu.linear_acceleration.z = data["ACCEL_Z_FILTERED"]/4096.0*9.8
-        imu.angular_velocity.x = data["GYRO_X_FILTERED"]*10*math.pi/180
-        imu.angular_velocity.y = data["GYRO_Y_FILTERED"]*10*math.pi/180
-        imu.angular_velocity.z = data["GYRO_Z_FILTERED"]*10*math.pi/180
+            imu.linear_acceleration.x = data["ACCEL_X_FILTERED"]/4096.0*9.8
+            imu.linear_acceleration.y = data["ACCEL_Y_FILTERED"]/4096.0*9.8
+            imu.linear_acceleration.z = data["ACCEL_Z_FILTERED"]/4096.0*9.8
+            imu.angular_velocity.x = data["GYRO_X_FILTERED"]*10*math.pi/180
+            imu.angular_velocity.y = data["GYRO_Y_FILTERED"]*10*math.pi/180
+            imu.angular_velocity.z = data["GYRO_Z_FILTERED"]*10*math.pi/180
 
-        self.imu = imu
-        self.imu_pub.publish(self.imu)
+            self.imu = imu
+            self.imu_pub.publish(self.imu)
         #TODO: parse the EMF into something.. 
 
     def compute_odom(self):
