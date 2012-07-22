@@ -188,6 +188,7 @@ class SpheroNode(object):
 
     def cmd_vel(self, msg):
         if self.is_connected:
+            rospy.logerr("got cmd_vel")
             self.last_cmd_vel_time = rospy.Time.now()
             self.cmd_heading = self.normalize_angle_positive(math.atan2(msg.linear.x,msg.linear.y))*180/math.pi
             self.cmd_speed = math.sqrt(math.pow(msg.linear.x,2)+math.pow(msg.linear.y,2))
