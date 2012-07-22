@@ -162,11 +162,11 @@ class BTInterface(object):
     sys.stdout.write("Searching for devices....")
     sys.stdout.flush()
 
-    for i in range(5):
+    for i in range(10):
       sys.stdout.write("....")
       sys.stdout.flush()
       nearby_devices = bluetooth.discover_devices()
-  
+
       if len(nearby_devices)>0:
         for bdaddr in nearby_devices:
           if bluetooth.lookup_name(bdaddr) is not None:
@@ -704,11 +704,18 @@ class Sphero(threading.Thread):
     -------------------------------------------------------------
 
     * SOP1 - Start Packet 1 - Always 0xff.
-    * SOP2 - Start Packet 2 - Set to 0xff when this is an acknowledgement, 0xfe otherwise.
+    * SOP2 - Start Packet 2 - Set to 0xff when this is an
+      acknowledgement, 0xfe otherwise.
     * ID CODE - ID Code - See the IDCODE dict
-    * DLEN-MSB - Data Length MSB - The MSB  number of bytes following through the end of the packet
-    * DLEN-LSB - Data Length LSB - The LSB  number of bytes following through the end of the packet
-    * <data>                                                                                                                           * CHK - Checksum - - The modulo 256 sum of all the bytes from the DID through the end of the data payload, bit inverted (1's complement)
+    * DLEN-MSB - Data Length MSB - The MSB number of bytes following
+      through the end of the packet
+    * DLEN-LSB - Data Length LSB - The LSB number of bytes following
+      through the end of the packet
+    * <data>
+    * CHK - Checksum - - The modulo 256 sum of all the bytes from the
+      DID through the end of the data payload, bit inverted (1's
+      complement)
+
     '''
 
     while self.is_connected and not self.shutdown:
@@ -747,17 +754,35 @@ class Sphero(threading.Thread):
       self.raw_data_buf=data
 
   def parse_pwr_notify(self, data, data_length):
+
     return struct.unpack_from('B', ''.join(data[5:]))[0]
 
   def parse_collision_detect(self, data, data_length):
+    '''
+    The data payload of the async message is 10h bytes long and
+    formatted as follows:
+    -----------------------------------------------------------------
+    |X | Y | Z | AXIS | xMagnitude | yMagnitude | Speed | Timestamp |
+    -----------------------------------------------------------------
+
+    * X, Y, Z - Impact components normalized as a signed 16-bit
+    value. Use these to determine the direction of collision event. If
+    you don't require this level of fidelity, the two Magnitude fields
+    encapsulate the same data in pre-processed format.
+    * Axis - This bitfield specifies which axes had their trigger
+    thresholds exceeded to generate the event. Bit 0 (01h) signifies
+    the X axis and bit 1 (02h) the Y axis.
+    * xMagnitude - This is the power that crossed the programming
+    threshold Xt + Xs.
+    * yMagnitude - This is the power that crossed the programming
+    threshold Yt + Ys.
+    * Speed - The speed of Sphero when the impact was detected.
+    * Timestamp - The millisecond timer value at the time of impact;
+    refer to the documentation of CID 50h and 51h to make sense of
+    this value.
+    '''
     output={}
-    print "parsing collision"
-#    output['MAG'] = struct.unpack_from('>h', ''.join(data[5+1:]))
-#    output['HEADING'] = struct.unpack_from('>h', ''.join(data[5+3:]))
-#    output['PITCH'] = struct.unpack_from('>h', ''.join(data[5+4:]))
-#    output['SPEED'] = struct.unpack_from('>h', ''.join(data[5+5:]))
-#    output['TIME'] = struct.unpack_from('>h', ''.join(data[5+9:]))
-#    print output
+    output['X'], output['Y'], output['Z'], output['Axis'], output['xMagnitude'], output['yMagnitude'], output['Speed'], output['Timestamp'] = struct.unpack_from('>hhhbhhbI', ''.join(data[5+1:]))
     return output
 
   def parse_data_strm(self, data, data_length):
@@ -771,5 +796,6 @@ class Sphero(threading.Thread):
   def disconnect(self):
     self.is_connected = False
     self.bt.close()
+    return self.is_connected
 
 

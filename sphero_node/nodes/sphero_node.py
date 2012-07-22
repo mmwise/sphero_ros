@@ -181,8 +181,6 @@ class SpheroNode(object):
             self.imu_pub.publish(self.imu)
         #TODO: parse the EMF into something.. 
 
-    def compute_odom(self):
-        pass
 
     def cmd_vel(self, msg):
         if self.is_connected:
