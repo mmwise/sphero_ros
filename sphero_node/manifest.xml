@@ -13,6 +13,8 @@
   <depend package="nav_msgs"/>
   <depend package="kdl"/>
   <depend package="tf"/>
+  <depend package="dynamic_reconfigure"/>
+  
 </package>
 
 
