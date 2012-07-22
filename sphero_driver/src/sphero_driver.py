@@ -258,8 +258,8 @@ class Sphero(threading.Thread):
   def remove_sync_callback(self, callback_type):
     del self._sync_callback_dict[callback_type]
 
-    def clamp(n, minn, maxn):
-      return max(min(maxn, n), minn)
+  def clamp(n, minn, maxn):
+    return max(min(maxn, n), minn)
     
   def ping(self, response):
     """
