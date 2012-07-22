@@ -135,6 +135,8 @@ class SpheroNode(object):
             r.sleep()
                     
     def stop(self):    
+        #tell the ball to stop moving before quiting
+        self.robot.roll(int(0), int(0), 1, False)
         self.robot.shutdown = True
         rospy.sleep(1.0)
         self.is_connected = self.robot.disconnect()
@@ -223,6 +225,7 @@ class SpheroNode(object):
         if self.is_connected:
             self.robot.set_rgb_led(int(config['red']*255),int(config['green']*255),int(config['blue']*255),0,False)
         return config
+
         
 if __name__ == '__main__':
     s = SpheroNode()
