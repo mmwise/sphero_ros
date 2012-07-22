@@ -88,7 +88,7 @@ class SpheroNode(object):
         self.stabilization_sub = rospy.Subscriber('disable_stabilization', Bool, self.set_stabilization, queue_size = 1)
         self.heading_sub = rospy.Subscriber('set_heading', Float32, self.set_heading, queue_size = 1)
         self.angular_velocity_sub = rospy.Subscriber('set_angular_velocity', Float32, self.set_angular_velocity, queue_size = 1)
-        self.reconfigure_srv = dynamic_reconfigure.server.Server(ColorConfig, self.reconfigure)
+        self.reconfigure_srv = dynamic_reconfigure.server.Server(ReconfigConfig, self.reconfigure)
 
     def _init_params(self):
         self.connect_color_red = rospy.get_param('~connect_red',0)
