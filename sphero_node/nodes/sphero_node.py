@@ -41,13 +41,14 @@ import tf
 import PyKDL
 
 import sphero_driver 
+import dynamic_reconfigure.server
 
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, TwistWithCovariance, Vector3
 from std_msgs.msg import ColorRGBA, Float32, Bool
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
-
+from sphero_node.cfg import ReconfigConfig
 
 
 class SpheroNode(object):
@@ -87,6 +88,7 @@ class SpheroNode(object):
         self.stabilization_sub = rospy.Subscriber('disable_stabilization', Bool, self.set_stabilization, queue_size = 1)
         self.heading_sub = rospy.Subscriber('set_heading', Float32, self.set_heading, queue_size = 1)
         self.angular_velocity_sub = rospy.Subscriber('set_angular_velocity', Float32, self.set_angular_velocity, queue_size = 1)
+        self.reconfigure_srv = dynamic_reconfigure.server.Server(ColorConfig, self.reconfigure)
 
     def _init_params(self):
         self.connect_color_red = rospy.get_param('~connect_red',0)
@@ -126,7 +128,7 @@ class SpheroNode(object):
                 if self.cmd_heading != 0 and self.cmd_speed != 0:
                     self.cmd_heading = 0
                     self.cmd_speed = 0
-                    self.robot.roll(int(self.cmd_speed),int(self.cmd_heading),1,False)
+                    self.robot.roll(int(self.cmd_speed), int(self.cmd_heading), 1, False)
             if (now - self.last_diagnostics_time) > self.diag_update_rate:
                 self.last_diagnostics_time = now
                 self.publish_diagnostics(now)
@@ -135,7 +137,7 @@ class SpheroNode(object):
     def stop(self):    
         self.robot.shutdown = True
         rospy.sleep(1.0)
-        self.robot.disconnect()
+        self.is_connected = self.robot.disconnect()
         self.robot.join()
 
     def publish_diagnostics(self, time):
@@ -184,10 +186,11 @@ class SpheroNode(object):
 
     def cmd_vel(self, msg):
         if self.is_connected:
+            rospy.logerr("got cnd_vel_msg")
             self.last_cmd_vel_time = rospy.Time.now()
             self.cmd_heading = self.normalize_angle_positive(math.atan2(msg.linear.x,msg.linear.y))*180/math.pi
             self.cmd_speed = math.sqrt(math.pow(msg.linear.x,2)+math.pow(msg.linear.y,2))
-            self.robot.roll(int(self.cmd_speed),int(self.cmd_heading),1,False)
+            self.robot.roll(int(self.cmd_speed), int(self.cmd_heading), 1, False)
     
     def set_color(self, msg):
         if self.is_connected:
@@ -195,14 +198,14 @@ class SpheroNode(object):
 
     def set_back_led(self, msg):
         if self.is_connected:
-            self.robot.set_back(msg.data,False)
+            self.robot.set_back(msg.data, False)
 
     def set_stabilization(self, msg):
         if self.is_connected:
             if not msg.data:
-                self.robot.set_stablization(1,False)
+                self.robot.set_stablization(1, False)
             else:
-                self.robot.set_stablization(0,False)
+                self.robot.set_stablization(0, False)
 
     def set_heading(self, msg):
         if self.is_connected:
@@ -217,8 +220,11 @@ class SpheroNode(object):
     def configure_collision_detect(self, msg):
         pass
 
-
-
+    def reconfigure(self, config, level):
+        if self.is_connected:
+            self.robot.set_rgb_led(int(config['red']*255),int(config['green']*255),int(config['blue']*255),0,False)
+        return config
+        
 if __name__ == '__main__':
     s = SpheroNode()
     s.start()
