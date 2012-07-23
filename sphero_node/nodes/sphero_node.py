@@ -124,7 +124,6 @@ class SpheroNode(object):
         r = rospy.Rate(10.0)
         while not rospy.is_shutdown():
             now = rospy.Time.now()
-            rospy.logerr((now - self.last_cmd_vel_time))
             if  (now - self.last_cmd_vel_time) > self.cmd_vel_timeout:
                 if self.cmd_heading != 0 or self.cmd_speed != 0:
                     self.cmd_heading = 0
@@ -189,11 +188,9 @@ class SpheroNode(object):
 
     def cmd_vel(self, msg):
         if self.is_connected:
-            rospy.logerr("got cmd_vel")
             self.last_cmd_vel_time = rospy.Time.now()
             self.cmd_heading = self.normalize_angle_positive(math.atan2(msg.linear.x,msg.linear.y))*180/math.pi
             self.cmd_speed = math.sqrt(math.pow(msg.linear.x,2)+math.pow(msg.linear.y,2))
-            rospy.logerr("commanding heading: %f and speed: %f"%(self.cmd_heading, self.cmd_speed))
             self.robot.roll(int(self.cmd_speed), int(self.cmd_heading), 1, False)
     
     def set_color(self, msg):
