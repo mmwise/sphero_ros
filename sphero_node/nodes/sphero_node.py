@@ -124,7 +124,7 @@ class SpheroNode(object):
         r = rospy.Rate(10.0)
         while not rospy.is_shutdown():
             now = rospy.Time.now()
-            rospy.logerr((now - self.last_cmd_vel_time)
+            rospy.logerr((now - self.last_cmd_vel_time))
             if  (now - self.last_cmd_vel_time) > self.cmd_vel_timeout:
                 rospy.logerr("trying to timeout")
                 if self.cmd_heading != 0 and self.cmd_speed != 0:
