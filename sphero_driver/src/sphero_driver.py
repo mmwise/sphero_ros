@@ -812,7 +812,8 @@ class Sphero(threading.Thread):
     this value.
     '''
     output={}
-    output['X'], output['Y'], output['Z'], output['Axis'], output['xMagnitude'], output['yMagnitude'], output['Speed'], output['Timestamp'] = struct.unpack_from('>hhhbhhbI', ''.join(data[5+1:]))
+    
+    output['X'], output['Y'], output['Z'], output['Axis'], output['xMagnitude'], output['yMagnitude'], output['Speed'], output['Timestamp'] = struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))
     return output
 
   def parse_data_strm(self, data, data_length):

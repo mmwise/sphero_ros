@@ -46,6 +46,7 @@ import dynamic_reconfigure.server
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, TwistWithCovariance, Vector3
+from sphero_node.msg import SpheroCollision
 from std_msgs.msg import ColorRGBA, Float32, Bool
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from sphero_node.cfg import ReconfigConfig
@@ -81,6 +82,7 @@ class SpheroNode(object):
     def _init_pubsub(self):
         self.odom_pub = rospy.Publisher('odom', Odometry)
         self.imu_pub = rospy.Publisher('imu', Imu)
+        self.collision_pub = rospy.Publisher('collision', SpheroCollision)
         self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
         self.cmd_vel_sub = rospy.Subscriber('cmd_vel', Twist, self.cmd_vel, queue_size = 1)
         self.color_sub = rospy.Subscriber('set_color', ColorRGBA, self.set_color, queue_size = 1)
@@ -157,11 +159,27 @@ class SpheroNode(object):
 
 
     def parse_collision(self, data):
-        pass
+        if self.is_connected:
+            now = rospy.Time.now()
+            collision = SpheroCollision()
+            collision.header.stamp = now
+            collision.x = data["X"]
+            collision.y = data["Y"]
+            collision.z = data["Z"]
+            collision.axis = int(data["Axis"])
+            collision.x_magnitude = data["xMagnitude"]
+            collision.y_magnitude = data["yMagnitude"]
+            collision.speed = data["Speed"]
+            collision.timestamp = data["Timestamp"]
+            
+            self.collision = collision
+            self.collision_pub.publish(self.collision)
+            
 
     def parse_power_notify(self, data):
-        self.power_state = data
-        self.power_state_msg = self.battery_state[data]
+        if self.is_connected:
+            self.power_state = data
+            self.power_state_msg = self.battery_state[data]
 
     def parse_data_strm(self, data):
         if self.is_connected:
@@ -173,7 +191,6 @@ class SpheroNode(object):
                                                                                                               data["IMU_YAW_FILTERED"]/180*math.pi).GetQuaternion()
 
 
-        #TODO: Figure out units
             imu.linear_acceleration.x = data["ACCEL_X_FILTERED"]/4096.0*9.8
             imu.linear_acceleration.y = data["ACCEL_Y_FILTERED"]/4096.0*9.8
             imu.linear_acceleration.z = data["ACCEL_Z_FILTERED"]/4096.0*9.8
