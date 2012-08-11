@@ -1,0 +1,12 @@
+<package>
+  <description brief="sphero_driver">
+     sphero_driver provides a python based driver for interfacing with the sphero over bluetooth. 
+  </description>
+  <author>Melonee Wise</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/sphero_driver</url>
+
+</package>
+
+
