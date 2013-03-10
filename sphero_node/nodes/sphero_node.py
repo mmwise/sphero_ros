@@ -109,7 +109,7 @@ class SpheroNode(object):
             rospy.logerr("Failed to connect to Sphero.")
             sys.exit(1)
         #setup streaming    
-        self.robot.set_filtered_data_strm(self.sampling_divisor, 1 , 0, False)
+        self.robot.set_filtered_data_strm(self.sampling_divisor, 1 , 0, True)
         self.robot.add_async_callback(sphero_driver.IDCODE['DATA_STRM'], self.parse_data_strm)
         #setup power notification
         self.robot.set_power_notify(True, False)

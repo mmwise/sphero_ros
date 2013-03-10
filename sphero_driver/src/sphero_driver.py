@@ -117,7 +117,7 @@ REQ = dict(
   CMD_GET_MACRO_STATUS = [0x02, 0x56],
   CMD_SET_MACRO_STATUS = [0x02, 0x57])
 
-STRM = dict(
+STRM_MASK1 = dict(
   GYRO_H_FILTERED    = 0x00000001,
   GYRO_M_FILTERED    = 0x00000002,
   GYRO_L_FILTERED    = 0x00000004,
@@ -147,6 +147,17 @@ STRM = dict(
   ACCEL_Y_RAW        = 0x40000000,
   ACCEL_X_RAW        = 0x80000000)
 
+STRM_MASK2 = dict(
+  QUATERNION_Q0      = 0x80000000,
+  QUATERNION_Q1      = 0x40000000,
+  QUATERNION_Q2      = 0x20000000,
+  QUATERNION_Q3      = 0x10000000,
+  ODOM_X             = 0x08000000,
+  ODOM_Y             = 0x04000000,
+  ACCELONE           = 0x02000000,
+  VELOCITY_x         = 0x01000000,
+  VELOCITY_Y         = 0x00800000)
+
 
 class BTInterface(object):
 
@@ -165,16 +176,15 @@ class BTInterface(object):
     for i in range(10):
       sys.stdout.write("....")
       sys.stdout.flush()
-      nearby_devices = bluetooth.discover_devices()
+      nearby_devices = bluetooth.discover_devices(lookup_names = True)
 
       if len(nearby_devices)>0:
-        for bdaddr in nearby_devices:
-          if bluetooth.lookup_name(bdaddr) is not None:
-            #look for a device name that starts with Sphero
-            if bluetooth.lookup_name(bdaddr).startswith(self.target_name):
-              self.found_device = True
-              self.target_address = bdaddr
-              break
+        for bdaddr, name in nearby_devices:
+          #look for a device name that starts with Sphero
+          if name.startswith(self.target_name):
+            self.found_device = True
+            self.target_address = bdaddr
+            break
       if self.found_device:
         break
 
@@ -190,7 +200,10 @@ class BTInterface(object):
     try:
       self.sock=bluetooth.BluetoothSocket(bluetooth.RFCOMM)
       self.sock.connect((bdaddr,self.port))
-    except:
+    except bluetooth.btcommon.BluetoothError as error:
+      sys.stdout.write(error)
+      sys.stdout.flush()
+      time.sleep(5.0)
       sys.exit(1)
     sys.stdout.write("Paired with Sphero.\n")
     sys.stdout.flush()
@@ -213,7 +226,9 @@ class Sphero(threading.Thread):
     self.bt = None
     self.shutdown = False
     self.is_connected = False
-    self.stream_mask = None
+    self.mask_list = None
+    self.stream_mask1 = None
+    self.stream_mask2 = None
     self.seq = 0
     self.raw_data_buf = []
     self._communication_lock = threading.Lock()
@@ -239,12 +254,17 @@ class Sphero(threading.Thread):
   def data2hexstr(self, data):
     return ' '.join([ ("%02x"%ord(d)) for d in data])
 
-  def create_mask_list(self, mask):
+  def create_mask_list(self, mask1, mask2):
     #save the mask
-    self.sample_mask = mask
-    sorted_STRM = sorted(STRM.iteritems(), key=operator.itemgetter(1), reverse=True)
+    sorted_STRM1 = sorted(STRM_MASK1.iteritems(), key=operator.itemgetter(1), reverse=True)
     #create a list containing the keys that are part of the mask
-    self.mask_list = [key  for key, value in sorted_STRM if value & self.sample_mask]
+    self.mask_list1 = [key  for key, value in sorted_STRM1 if value & mask1]
+
+    sorted_STRM2 = sorted(STRM_MASK2.iteritems(), key=operator.itemgetter(1), reverse=True)
+    #create a list containing the keys that are part of the mask
+    self.mask_list2 = [key  for key, value in sorted_STRM2 if value & mask2]
+    self.mask_list = self.mask_list1 + self.mask_list2
+
 
   def add_async_callback(self, callback_type, callback):
     self._async_callback_dict[callback_type] = callback
@@ -503,7 +523,7 @@ class Sphero(threading.Thread):
     """
     self.send(self.pack_cmd(REQ['CMD_GET_APP_CONFIG_BLK'], []), response)
 
-  def set_data_strm(self, sample_div, sample_frames, sample_mask, pcnt, response):
+  def set_data_strm(self, sample_div, sample_frames, sample_mask1, pcnt, sample_mask2, response):
     """
     Currently the control system runs at 400Hz and because it's pretty
     unlikely you will want to see data at that rate, N allows you to
@@ -520,36 +540,49 @@ class Sphero(threading.Thread):
 
     :param sample_div: divisor of the maximum sensor sampling rate.
     :param sample_frames: number of sample frames emitted per packet.
-    :param sample_mask: bitwise selector of data sources to stream.
+    :param sample_mask1: bitwise selector of data sources to stream.
     :param pcnt: packet count (set to 0 for unlimited streaming).
     :param response: request response back from Sphero.
     """
     data = self.pack_cmd(REQ['CMD_SET_DATA_STRM'], \
-           [(sample_div>>8), (sample_div & 0xff), (sample_frames>>8), (sample_frames & 0xff), ((sample_mask>>24) & 0xff), \
-              ((sample_mask>>16) & 0xff),((sample_mask>>8) & 0xff), (sample_mask & 0xff), pcnt])
-    self.create_mask_list(sample_mask)
-    self.stream_mask = sample_mask
+           [(sample_div>>8), (sample_div & 0xff), (sample_frames>>8), (sample_frames & 0xff), ((sample_mask1>>24) & 0xff), \
+              ((sample_mask1>>16) & 0xff),((sample_mask1>>8) & 0xff), (sample_mask1 & 0xff), pcnt, ((sample_mask2>>24) & 0xff), \
+              ((sample_mask2>>16) & 0xff),((sample_mask2>>8) & 0xff), (sample_mask2 & 0xff)])
+    self.create_mask_list(sample_mask1, sample_mask2)
+    self.stream_mask1 = sample_mask1
+    self.stream_mask2 = sample_mask2
+    print data
     self.send(data, response)
 
   def set_filtered_data_strm(self, sample_div, sample_frames, pcnt, response):
-    mask = 0
-    for key,value in STRM.iteritems():
+    mask1 = 0
+    mask2 = 0
+    for key,value in STRM_MASK1.iteritems():
       if 'FILTERED' in key:
-        mask = mask|value
-    self.set_data_strm(sample_div, sample_frames, mask, pcnt, response)
+        mask1 = mask1|value
+    for value in STRM_MASK2.itervalues():
+        mask2 = mask2|value
+    self.set_data_strm(sample_div, sample_frames, mask1, pcnt, mask2, response)
 
   def set_raw_data_strm(self, sample_div, sample_frames, pcnt, response):
-    mask = 0
-    for key,value in STRM.iteritems():
+    mask1 = 0
+    mask2 = 0
+    for key,value in STRM_MASK1.iteritems():
       if 'RAW' in key:
-        mask = mask|value
-    self.set_data_strm(sample_div, sample_frames, mask, pcnt, response)
+        mask1 = mask1|value
+    for value in STRM_MASK2.itervalues():
+        mask2 = mask2|value
+    self.set_data_strm(sample_div, sample_frames, mask1, pcnt, mask2, response)
+
 
   def set_all_data_strm(self, sample_div, sample_frames, pcnt, response):
-    mask = 0
-    for value in STRM.itervalues():
-        mask = mask|value
-    self.set_data_strm(sample_div, sample_frames, mask, pcnt, response)
+    mask1 = 0
+    mask2 = 0
+    for value in STRM_MASK1.itervalues():
+        mask1 = mask1|value
+    for value in STRM_MASK2.itervalues():
+        mask2 = mask2|value
+    self.set_data_strm(sample_div, sample_frames, mask1, pcnt, mask2, response)
 
   def config_collision_detect(self, method, Xt, Xspd, Yt, Yspd, ignore_time, response):
     """
@@ -821,6 +854,7 @@ class Sphero(threading.Thread):
     for i in range((data_length-1)/2):
       unpack = struct.unpack_from('>h', ''.join(data[5+2*i:]))
       output[self.mask_list[i]] = unpack[0]
+    print output
     return output
 
 
