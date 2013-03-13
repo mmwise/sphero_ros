@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% set title = 'Sphero ROS' %}
+{% block body %}
+  <h1>Welcome</h1>
+
+  <p>
+    sphero_ros is a set of drivers, nodes, and description files for using the Sphero with ROS.
+
+  </p>
+  <h2>Documentation</h2>
+
+  <table class="contentstable" align="center" style="margin-left: 30px"><tr>
+    <td width="50%">
+      <p class="biglink"><a class="biglink" href="{{ pathto("overview") }}">Overview</a><br/>
+         <span class="linkdescr">Using sphero_ros with your Sphero.</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("tutorials") }}">Tutorials</a><br/>
+         <span class="linkdescr">How to get started with ROS and Sphero</span></p>
+
+    </td><td width="50%">
+
+      <p class="biglink"><a class="biglink" href="{{ pathto("api") }}">Python API</a><br/>
+         <span class="linkdescr">Python API for using sphero_ros as a library</span></p>
+
+      <p class="biglink"><a class="biglink" href="http://www.gosphero.com/">Sphero</a><br/>
+         <span class="linkdescr">Head to the Sphero website</span></p>
+
+
+
+    </td></tr>
+  </table>
+
+{% endblock %}
