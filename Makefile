@@ -155,11 +155,11 @@ doctest:
 
 gh-pages:
 	git checkout gh-pages	
-	rm -rf _build _static
+	rm -rf docs/_build docs/_static
 	git checkout master $(GH_PAGES_SOURCES)
 	git reset HEAD
 	make -C docs html
-	mv -fv _build/html/* ./
-	rm -rf $(GH_PAGES_SOURCES) _build
+	mv -fv docs/_build/html/* ./
+	rm -rf $(GH_PAGES_SOURCES) docs/_build
 	git add -A
 #	git ci -m "Generated gh-pages for `git log master -1 --pretty=short --abbrev-commit`" && git push origin gh-pages ; git checkout master
