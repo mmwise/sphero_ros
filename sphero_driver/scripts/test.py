@@ -2,7 +2,7 @@
 import bluetooth
 import struct
 import time
-import sphero_driver
+from sphero_driver import sphero_driver
 import sys
 sphero = sphero_driver.Sphero()
 sphero.connect()
