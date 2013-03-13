@@ -336,7 +336,7 @@ class Sphero(threading.Thread):
     seconds after waking up.
 
     :param enable: 00h to disable or 01h to enable auto reconnecting.
-    :param time: the number of seconds after power-up in which to
+    :param time: the number of seconds after power-up in which to\
     enable auto reconnect mode
     :param response: request response back from Sphero.
     """
@@ -440,24 +440,24 @@ class Sphero(threading.Thread):
     time stamped events.
 
     The scheme is as follows: the Client sends the command with the
-    Client Tx time (T1) filled in. Upon receipt of the packet, the
+    Client Tx time (:math:`T_{1}`) filled in. Upon receipt of the packet, the
     command processor in Sphero copies that time into the response
     packet and places the current value of the millisecond counter
-    into the Sphero Rx time field (T2). Just before the transmit
+    into the Sphero Rx time field (:math:`T_{2}`). Just before the transmit
     engine streams it into the Bluetooth module, the Sphero Tx time
-    value (T3) is filled in. If the Client then records the time at
-    which the response is received (T4) the relevant time segments can
-    be computed from the four time stamps T1-T4:
+    value (:math:`T_{3}`)  is filled in. If the Client then records the time at
+    which the response is received (:math:`T_{4}`) the relevant time segments can
+    be computed from the four time stamps (:math:`T_{1}, T_{2}, T_{3}, T_{4}`):
 
-    * The value offset represents the maximum-likelihood time offset
+    * The value offset represents the maximum-likelihood time offset\
       of the Client clock to Sphero's system clock.
-        * offset = 1/2*[(T2 - T1) + (T3 - T4)]
+        * offset :math:`= 1/2*[(T_{2} - T_{1}) + (T_{3}  - T_{4})]`
 
-    * The value delay represents the round-trip delay between the
+    * The value delay represents the round-trip delay between the\
       Client and Sphero:
-        * delay = (T4 - T1) - (T3 - T2)
+        * delay :math:`= (T_{4} - T_{1}) - (T_{3} - T_{2})`
 
-    :param time: client TX time.
+    :param time: client Tx time.
     :param response: request response back from Sphero.
     """
     self.send(self.pack_cmd(REQ['CMD_POLL_TIME'],[((time>>24) & 0xff), ((time>>16) & 0xff), ((time>>8) & 0xff), (time & 0xff)]), response)
@@ -469,7 +469,7 @@ class Sphero(threading.Thread):
     to 359. You will see the ball respond immediately to this command
     if stabilization is enabled.
 
-    :param heading: heading in degrees from 0 to 359 (motion will be
+    :param heading: heading in degrees from 0 to 359 (motion will be\
     shortest angular distance to heading command)
     :param response: request response back from Sphero.
     """
@@ -495,10 +495,9 @@ class Sphero(threading.Thread):
     rotation rate to 157 degrees/sec. A value of 255 jumps to the
     maximum and a value of 1 is the minimum.
 
-    :param rate: rotation rate in units of 0.784degrees/sec (setting
-    this value will not cause the device to move only set the rate it
+    :param rate: rotation rate in units of 0.784degrees/sec (setting\
+    this value will not cause the device to move only set the rate it\
     will move in other funcation calls).
-
     :param response: request response back from Sphero.
     """
     self.send(self.pack_cmd(REQ['CMD_SET_ROTATION_RATE'],[self.clamp(rate, 0, 255)]), response)
@@ -516,9 +515,8 @@ class Sphero(threading.Thread):
 
   def get_app_config_blk(self, response):
     """
-    This allows you to retrieve the application configuration block
+    This allows you to retrieve the application configuration block\
     that is set aside for exclusive use by applications.
-
     :param response: request response back from Sphero.
     """
     self.send(self.pack_cmd(REQ['CMD_GET_APP_CONFIG_BLK'], []), response)
@@ -592,16 +590,16 @@ class Sphero(threading.Thread):
     message is generated, preventing message overload to the
     client. The value is in 10 millisecond increments.
 
-    :param method: Detection method type to use. Currently the only
-    method supported is 01h. Use 00h to completely disable this
+    :param method: Detection method type to use. Currently the only\
+    method supported is 01h. Use 00h to completely disable this\
     service.
-    :param Xt, Yt: An 8-bit settable threshold for the X (left/right)
-    and Y (front/back) axes of Sphero. A value of 00h disables the
+    :param Xt, Yt: An 8-bit settable threshold for the X (left/right)\
+    and Y (front/back) axes of Sphero. A value of 00h disables the\
     contribution of that axis.
-    :param Xspd,Yspd: An 8-bit settable speed value for the X and Y
-    axes. This setting is ranged by the speed, then added to Xt, Yt to
+    :param Xspd,Yspd: An 8-bit settable speed value for the X and Y\
+    axes. This setting is ranged by the speed, then added to Xt, Yt to\
     generate the final threshold value.
-    :param ignore_time:An 8-bit post-collision dead time to prevent
+    :param ignore_time: An 8-bit post-collision dead time to prevent\
     retriggering; specified in 10ms increments.
     """
     self.send(self.pack_cmd(REQ['CMD_CFG_COL_DET'],[method, Xt, Xspd, Yt, Yspd, ignore_time]), response)
@@ -681,7 +679,7 @@ class Sphero(threading.Thread):
     if both modes aren't "ignore" so you'll need to re-enable it via
     CID 02h once you're done.
 
-    :param mode: 0x00 - off, 0x01 - forward, 0x02 - reverse, 0x03 -
+    :param mode: 0x00 - off, 0x01 - forward, 0x02 - reverse, 0x03 -\
     brake, 0x04 - ignored.
     :param power: 0-255 scalar value (units?).
     """
@@ -689,24 +687,25 @@ class Sphero(threading.Thread):
 
   def send(self, data, response):
     """
-    Packets are sent from Client -> Sphero in the following byte format:
-    -------------------------------------------------------
-    | SOP1 | SOP2 | DID | CID | SEQ | DLEN | <data> | CHK |
-    -------------------------------------------------------
+    Packets are sent from Client -> Sphero in the following byte format::
+
+      -------------------------------------------------------
+      | SOP1 | SOP2 | DID | CID | SEQ | DLEN | <data> | CHK |
+      -------------------------------------------------------
 
     * SOP1 - start packet 1 - Always 0xff. 
-    * SOP2 - start packet 2 - Set to 0xff when an acknowledgement is
+    * SOP2 - start packet 2 - Set to 0xff when an acknowledgement is\
       expected, 0xfe otherwise.    
     * DID - Device ID
     * CID - Command ID
-    * SEQ - Sequence Number - This client field is echoed in the
-      response for all synchronous commands (and ignored by Sphero
+    * SEQ - Sequence Number - This client field is echoed in the\
+      response for all synchronous commands (and ignored by Sphero\
       when SOP2 = 0xfe)
     * DLEN - Data
     * Length - Number of bytes through the end of the packet.
     * <data>
-    * CHK - Checksum - The modulo 256 sum of all the bytes from the
-      DID through the end of the data payload, bit inverted (1's
+    * CHK - Checksum - The modulo 256 sum of all the bytes from the\
+      DID through the end of the data payload, bit inverted (1's\
       complement).
     """
     #compute the checksum
@@ -730,44 +729,44 @@ class Sphero(threading.Thread):
   def recv(self, num_bytes):
     '''
     Commands are acknowledged from the Sphero -> Client in the
-    following format:
+    following format::
 
-    -------------------------------------------------
-    |SOP1 | SOP2 | MSRP | SEQ | DLEN | <data> | CHK |
-    -------------------------------------------------
+      -------------------------------------------------
+      |SOP1 | SOP2 | MSRP | SEQ | DLEN | <data> | CHK |
+      -------------------------------------------------
 
     * SOP1 - Start Packet 1 - Always 0xff.
-    * SOP2 - Start Packet 2 - Set to 0xff when this is an
+    * SOP2 - Start Packet 2 - Set to 0xff when this is an\
       acknowledgement, 0xfe otherwise.
-    * MSRP - Message Response - This is generated by the message
+    * MSRP - Message Response - This is generated by the message\
       decoder of the virtual device.
-    * SEQ - Sequence Number - Echoed to the client when this is a
+    * SEQ - Sequence Number - Echoed to the client when this is a\
       direct message response (set to 00h when SOP2 = FEh)
-    * DLEN - Data Length - The number of bytes following through the
+    * DLEN - Data Length - The number of bytes following through the\
       end of the packet
     * <data>
-    * CHK - Checksum - - The modulo 256 sum of all the bytes from the
-      DID through the end of the data payload, bit inverted (1's
+    * CHK - Checksum - - The modulo 256 sum of all the bytes from the\
+      DID through the end of the data payload, bit inverted (1's\
       complement)
 
     Asynchronous Packets are sent from Sphero -> Client in the
-    following byte format:
+    following byte format::
 
-    -------------------------------------------------------------
-    |SOP1 | SOP2 | ID CODE | DLEN-MSB | DLEN-LSB | <data> | CHK |
-    -------------------------------------------------------------
+      -------------------------------------------------------------
+      |SOP1 | SOP2 | ID CODE | DLEN-MSB | DLEN-LSB | <data> | CHK |
+      -------------------------------------------------------------
 
     * SOP1 - Start Packet 1 - Always 0xff.
     * SOP2 - Start Packet 2 - Set to 0xff when this is an
       acknowledgement, 0xfe otherwise.
     * ID CODE - ID Code - See the IDCODE dict
-    * DLEN-MSB - Data Length MSB - The MSB number of bytes following
+    * DLEN-MSB - Data Length MSB - The MSB number of bytes following\
       through the end of the packet
-    * DLEN-LSB - Data Length LSB - The LSB number of bytes following
+    * DLEN-LSB - Data Length LSB - The LSB number of bytes following\
       through the end of the packet
     * <data>
-    * CHK - Checksum - - The modulo 256 sum of all the bytes from the
-      DID through the end of the data payload, bit inverted (1's
+    * CHK - Checksum - - The modulo 256 sum of all the bytes from the\
+      DID through the end of the data payload, bit inverted (1's\
       complement)
 
     '''
@@ -810,38 +809,43 @@ class Sphero(threading.Thread):
   def parse_pwr_notify(self, data, data_length):
     '''
     The data payload of the async message is 1h bytes long and
-    formatted as follows:
-    --------
-    |State |
-    --------
+    formatted as follows::
 
-    The power state byte: 01h = Battery Charging, 02h = Battery OK,
-    03h = Battery Low, 04h = Battery Critical
+      --------
+      |State |
+      --------
+
+    The power state byte: 
+      * 01h = Battery Charging, 
+      * 02h = Battery OK,
+      * 03h = Battery Low, 
+      * 04h = Battery Critical
     '''
     return struct.unpack_from('B', ''.join(data[5:]))[0]
 
   def parse_collision_detect(self, data, data_length):
     '''
     The data payload of the async message is 10h bytes long and
-    formatted as follows:
-    -----------------------------------------------------------------
-    |X | Y | Z | AXIS | xMagnitude | yMagnitude | Speed | Timestamp |
-    -----------------------------------------------------------------
+    formatted as follows::
 
-    * X, Y, Z - Impact components normalized as a signed 16-bit
-    value. Use these to determine the direction of collision event. If
-    you don't require this level of fidelity, the two Magnitude fields
+      -----------------------------------------------------------------
+      |X | Y | Z | AXIS | xMagnitude | yMagnitude | Speed | Timestamp |
+      -----------------------------------------------------------------
+
+    * X, Y, Z - Impact components normalized as a signed 16-bit\
+    value. Use these to determine the direction of collision event. If\
+    you don't require this level of fidelity, the two Magnitude fields\
     encapsulate the same data in pre-processed format.
-    * Axis - This bitfield specifies which axes had their trigger
-    thresholds exceeded to generate the event. Bit 0 (01h) signifies
+    * Axis - This bitfield specifies which axes had their trigger\
+    thresholds exceeded to generate the event. Bit 0 (01h) signifies\
     the X axis and bit 1 (02h) the Y axis.
-    * xMagnitude - This is the power that crossed the programming
+    * xMagnitude - This is the power that crossed the programming\
     threshold Xt + Xs.
-    * yMagnitude - This is the power that crossed the programming
+    * yMagnitude - This is the power that crossed the programming\
     threshold Yt + Ys.
     * Speed - The speed of Sphero when the impact was detected.
-    * Timestamp - The millisecond timer value at the time of impact;
-    refer to the documentation of CID 50h and 51h to make sense of
+    * Timestamp - The millisecond timer value at the time of impact;\
+    refer to the documentation of CID 50h and 51h to make sense of\
     this value.
     '''
     output={}
