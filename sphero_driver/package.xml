@@ -1,0 +1,17 @@
+<package>
+  <name>sphero_driver</name>
+  <version>0.1.0</version>
+  <description>
+    sphero_driver provides a python based driver for interfacing with the sphero over bluetooth.
+  </description>
+  <author>Melonee Wise</author>
+  <maintainer email="email@here.com">Melonee Wise</maintainer>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/sphero_driver</url>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- TODO: add proper system depends (python, bluetooth, etc) -->
+
+</package>
+

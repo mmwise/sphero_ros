@@ -1,0 +1,30 @@
+<package>
+  <name>sphero_node</name>
+  <version>0.1.0</version>
+  <description>
+    sphero_node provides a ROS wrapper for the sphero driver.
+  </description>
+  <author>Melonee Wise</author>
+  <maintainer email="email@here.com">Melonee Wise</maintainer>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/sphero_node</url>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>std_msgs</build_depend>
+
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>sphero_driver</run_depend>
+  <run_depend>sphero_description</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>python_orocos_kdl</run_depend>
+  <run_depend>rospy</run_depend>
+</package>

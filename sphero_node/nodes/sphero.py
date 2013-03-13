@@ -31,16 +31,14 @@
 #***********************************************************
 #author: Melonee Wise
 
-import roslib; roslib.load_manifest('sphero_node')
 import rospy
-
 
 import math
 import sys
 import tf
 import PyKDL
 
-import sphero_driver 
+from sphero_driver import sphero_driver
 import dynamic_reconfigure.server
 
 from sensor_msgs.msg import Imu
