@@ -14,5 +14,3 @@
   <run_depend>urdf</run_depend>
   <run_depend>xacro</run_depend>
 </package>
-
-

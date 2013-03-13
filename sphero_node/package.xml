@@ -28,4 +28,3 @@
   <run_depend>python_orocos_kdl</run_depend>
   <run_depend>rospy</run_depend>
 </package>
-
