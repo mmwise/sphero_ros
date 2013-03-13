@@ -18,4 +18,9 @@ Installation is now based on catkin:
    * Source files in sphero_driver have been pushed into src/sphero_driver and an __init__.py  has been added to simplify installation.
  * TODO:
    * Update run_depends on sphero_driver so that system depends are installed.
-   * Source files in sphero_driver have been pushed into src/sphero_driver and an __init__.py  has been added to simplify installation.
+   * Rename master to groovy-devel (is easier for releases):
+     * rename master to groovy-devel: git branch -m master groovy-devel
+     * push it to github: git push -u origin groovy-devel
+     * go to github.com, change default branch to groovy-devel under settings
+     * remove master branch: git push origin :master
+   * Merge mikeferguson fork into groovy-devel branch
