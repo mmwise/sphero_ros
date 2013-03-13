@@ -12,7 +12,7 @@
 # serve to show the default.
 
 import sys, os
-sys.path.insert(0, '../sphero_driver/src')
+sys.path.insert(0, '../sphero_driver/src/sphero_driver')
 sys.path.insert(1, '../sphero_node/nodes')
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
