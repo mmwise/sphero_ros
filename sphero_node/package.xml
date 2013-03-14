@@ -5,7 +5,7 @@
     sphero_node provides a ROS wrapper for the sphero driver.
   </description>
   <author>Melonee Wise</author>
-  <maintainer email="email@here.com">Melonee Wise</maintainer>
+  <maintainer email="melonee@meloneewise.com">Melonee Wise</maintainer>
   <license>BSD</license>
   <url>http://ros.org/wiki/sphero_node</url>
   
