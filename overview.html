@@ -50,6 +50,16 @@
     </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="contents.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">sphero_ros Overview</a></li>
+<li><a class="reference internal" href="#quick-start">Quick Start</a><ul>
+<li><a class="reference internal" href="#pair-the-sphero">Pair the Sphero</a></li>
+<li><a class="reference internal" href="#start-the-node">Start the Node</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="contents.html"
                         title="previous chapter">Indices and tables</a></p>
@@ -84,6 +94,45 @@
             
   <div class="section" id="sphero-ros-overview">
 <h1>sphero_ros Overview<a class="headerlink" href="#sphero-ros-overview" title="Permalink to this headline">¶</a></h1>
+<p>sphero_ros contains several packages for controlling and using a sphero with ROS.</p>
+<ul class="simple">
+<li>sphero_driver: A pure python driver for sphero. The driver
+implements most of the Sphero 1.2 API.</li>
+<li>sphero_node: A ROS wrapper for the sphero_driver and exposes all the
+topics and services you would expect to find in a ROS node. For more
+information checkout the node documentation.</li>
+<li>sphero_description: A URDF for sphero.</li>
+</ul>
+</div>
+<div class="section" id="quick-start">
+<h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
+<p>Already familiar with ROS and want to get started?</p>
+<div class="section" id="pair-the-sphero">
+<h2>Pair the Sphero<a class="headerlink" href="#pair-the-sphero" title="Permalink to this headline">¶</a></h2>
+<p>Since Sphero has a PIN, the first step is to setup a new bluetooth
+device.</p>
+<ul class="simple">
+<li>Shake the Sphero to turn it on.</li>
+<li>Go into the bluetooth setup screen and select the device in the list
+with Sphero in the name.</li>
+<li>Select the device and set the PIN option to &#8216;0000&#8217;.</li>
+</ul>
+</div>
+<div class="section" id="start-the-node">
+<h2>Start the Node<a class="headerlink" href="#start-the-node" title="Permalink to this headline">¶</a></h2>
+<p>Now start the Sphero node:</p>
+<div class="highlight-python"><pre>rosrun sphero_node sphero.py</pre>
+</div>
+<p>You should see:</p>
+<div class="highlight-python"><pre>Searching for devices............
+Found Sphero device with address: XX:XX:XX:XX:XX:XX
+Paired with Sphero.</pre>
+</div>
+<p>Your Sphero will turn GREEN.</p>
+<p>If the pairing process fails, you will see:</p>
+<div class="highlight-python"><pre>[ERROR] [WallTime: 1363235908.174193] Failed to connect to Sphero.</pre>
+</div>
+</div>
 </div>
 
 
