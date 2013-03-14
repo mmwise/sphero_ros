@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>sphero_ros Python API &mdash; sphero_ros 0.1 documentation</title>
+    <title>sphero_ros Python &amp; Node API &mdash; sphero_ros 0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -51,8 +51,20 @@
             </a></p>
   <h3><a href="contents.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">sphero_ros Python API</a><ul>
+<li><a class="reference internal" href="#">sphero_ros Python &amp; Node API</a><ul>
+<li><a class="reference internal" href="#node-api">Node API</a><ul>
+<li><a class="reference internal" href="#sphero-py">sphero.py</a><ul>
+<li><a class="reference internal" href="#subscribed-topics">Subscribed Topics</a></li>
+<li><a class="reference internal" href="#published-topics">Published Topics</a></li>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id1">Python API</a><ul>
 <li><a class="reference internal" href="#module-sphero_driver">sphero_driver</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -86,10 +98,65 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="sphero-ros-python-api">
-<span id="python-api"></span><h1>sphero_ros Python API<a class="headerlink" href="#sphero-ros-python-api" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="sphero-ros-python-node-api">
+<span id="python-api"></span><h1>sphero_ros Python &amp; Node API<a class="headerlink" href="#sphero-ros-python-node-api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="node-api">
+<h2>Node API<a class="headerlink" href="#node-api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="sphero-py">
+<h3>sphero.py<a class="headerlink" href="#sphero-py" title="Permalink to this headline">¶</a></h3>
+<p>sphero.py provides a simple ROS wrapper for the sphero_driver.</p>
+<div class="section" id="subscribed-topics">
+<h4>Subscribed Topics<a class="headerlink" href="#subscribed-topics" title="Permalink to this headline">¶</a></h4>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">disable_stabilization</span></tt> (std_msgs/Bool)</dt>
+<dd>Turns the auto stabilization of the Sphero on and off. True for off and False for on.</dd>
+<dt><tt class="docutils literal"><span class="pre">cmd_vel</span></tt> (geometry_msgs/Twist)</dt>
+<dd>The commanded velocity of the Sphero.</dd>
+<dt><tt class="docutils literal"><span class="pre">set_angular_velocity</span></tt> (std_msgs/Float32)</dt>
+<dd>The angular velocity of the sphero.</dd>
+<dt><tt class="docutils literal"><span class="pre">set_back_led</span></tt> (std_msgs/Float32)</dt>
+<dd>Changes the brightness of the back white LED in the Sphero. Completely off is 0.0 and full brightness 1.0.</dd>
+<dt><tt class="docutils literal"><span class="pre">set_color</span></tt></dt>
+<dd>Sets the RGB color of the Sphero.</dd>
+<dt><tt class="docutils literal"><span class="pre">set_heading</span></tt></dt>
+<dd>Immediately changes the heading of the Sphero to the commanded angle. Will move in the shortest angular distance to the commanded heading.</dd>
+</dl>
+</div>
+<div class="section" id="published-topics">
+<h4>Published Topics<a class="headerlink" href="#published-topics" title="Permalink to this headline">¶</a></h4>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">collision</span></tt> (sphero_node/SpheroCollision)</dt>
+<dd>Publishes collision data when the Sphero collides with the environment.</dd>
+<dt><tt class="docutils literal"><span class="pre">diagnostics</span></tt> (diagnostic_msgs/DiagnosticArray)</dt>
+<dd>Publishes relevant information (i.e. battery status).</dd>
+<dt><tt class="docutils literal"><span class="pre">imu</span></tt> (snesor_msgs/Imu)</dt>
+<dd>The Sphero imu data.</dd>
+<dt><tt class="docutils literal"><span class="pre">odom</span></tt> (nav_msgs/Odometry)</dt>
+<dd>The odometric state of the Sphero.</dd>
+</dl>
+</div>
+<div class="section" id="parameters">
+<h4>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h4>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">~cmd_vel_timeout</span></tt> (float, default: 0.6)</dt>
+<dd>The time from when the last cmd_vel was published to set cmd_vel to zero.</dd>
+<dt><tt class="docutils literal"><span class="pre">~connect_blue</span></tt> (int, default: 0)</dt>
+<dd>Set the blue value of the color the Sphero turns on connection.</dd>
+<dt><tt class="docutils literal"><span class="pre">~connect_green</span></tt> (int, default: 255)</dt>
+<dd>Set the green value of the color the Sphero turns on connection.</dd>
+<dt><tt class="docutils literal"><span class="pre">~connect_red</span></tt> (int, default: 0)</dt>
+<dd>Set the red value of the color the Sphero turns on connection.</dd>
+<dt><tt class="docutils literal"><span class="pre">~diag_update_rate</span></tt> (float, default: 1.0)</dt>
+<dd>Sets the update rate for the diagnostics.</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="section" id="id1">
+<h2>Python API<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>The Python API for the underlying Sphero driver.</p>
 <div class="section" id="module-sphero_driver">
-<span id="sphero-driver"></span><h2>sphero_driver<a class="headerlink" href="#module-sphero_driver" title="Permalink to this headline">¶</a></h2>
+<span id="sphero-driver"></span><h3>sphero_driver<a class="headerlink" href="#module-sphero_driver" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="sphero_driver.Sphero">
 <em class="property">class </em><tt class="descclassname">sphero_driver.</tt><tt class="descname">Sphero</tt><big>(</big><em>target_name='Sphero'</em><big>)</big><a class="reference internal" href="_modules/sphero_driver.html#Sphero"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sphero_driver.Sphero" title="Permalink to this definition">¶</a></dt>
@@ -761,6 +828,7 @@ off and 01h for on.</p>
 
 </dd></dl>
 
+</div>
 </div>
 </div>
 
