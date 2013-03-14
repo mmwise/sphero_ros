@@ -160,6 +160,6 @@ gh-pages:
 	git reset HEAD
 	make -C docs html
 	mv -fv docs/_build/html/* ./
-	rm -rf $(GH_PAGES_SOURCES) docs/_build
+	rm -rf $(GH_PAGES_SOURCES)
 	git add -A
 	git commit -m "Generated gh-pages for `git log groovy-devel -1 --pretty=short --abbrev-commit`" && git push origin gh-pages ; git checkout groovy-devel
