@@ -549,7 +549,7 @@ class Sphero(threading.Thread):
     self.create_mask_list(sample_mask1, sample_mask2)
     self.stream_mask1 = sample_mask1
     self.stream_mask2 = sample_mask2
-    print data
+    #print data
     self.send(data, response)
 
   def set_filtered_data_strm(self, sample_div, sample_frames, pcnt, response):
@@ -777,13 +777,13 @@ class Sphero(threading.Thread):
       data = self.raw_data_buf
       while len(data)>5:
         if data[:2] == RECV['SYNC']:
-          print "got response packet"
+          #print "got response packet"
           # response packet
           data_length = ord(data[4])
           if data_length+5 <= len(data):
             data_packet = data[:(5+data_length)]
             data = data[(5+data_length):]
-            print "Response packet", self.data2hexstr(data_packet)
+            #print "Response packet", self.data2hexstr(data_packet)
           else:
             break
         elif data[:2] == RECV['ASYNC']:
@@ -858,7 +858,7 @@ class Sphero(threading.Thread):
     for i in range((data_length-1)/2):
       unpack = struct.unpack_from('>h', ''.join(data[5+2*i:]))
       output[self.mask_list[i]] = unpack[0]
-    print output
+    #print output
     return output
 
 
