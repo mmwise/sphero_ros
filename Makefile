@@ -156,10 +156,10 @@ doctest:
 gh-pages:
 	git checkout gh-pages	
 	rm -rf docs/_build docs/_static
-	git checkout master $(GH_PAGES_SOURCES)
+	git checkout groovy-devel $(GH_PAGES_SOURCES)
 	git reset HEAD
 	make -C docs html
 	mv -fv docs/_build/html/* ./
 	rm -rf $(GH_PAGES_SOURCES) docs/_build
 	git add -A
-	git commit -m "Generated gh-pages for `git log master -1 --pretty=short --abbrev-commit`" && git push origin gh-pages ; git checkout master
+	git commit -m "Generated gh-pages for `git log master -1 --pretty=short --abbrev-commit`" && git push origin gh-pages ; git checkout groovy-devel
