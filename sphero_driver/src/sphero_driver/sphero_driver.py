@@ -155,7 +155,7 @@ STRM_MASK2 = dict(
   ODOM_X             = 0x08000000,
   ODOM_Y             = 0x04000000,
   ACCELONE           = 0x02000000,
-  VELOCITY_x         = 0x01000000,
+  VELOCITY_X         = 0x01000000,
   VELOCITY_Y         = 0x00800000)
 
 
@@ -858,6 +858,7 @@ class Sphero(threading.Thread):
     for i in range((data_length-1)/2):
       unpack = struct.unpack_from('>h', ''.join(data[5+2*i:]))
       output[self.mask_list[i]] = unpack[0]
+    #print self.mask_list
     #print output
     return output
 
