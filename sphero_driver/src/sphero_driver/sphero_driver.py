@@ -553,6 +553,15 @@ class Sphero(threading.Thread):
     self.send(data, response)
 
   def set_filtered_data_strm(self, sample_div, sample_frames, pcnt, response):
+    """
+    Helper function to add all the filtered data to the data strm
+    mask, so that the user doesn't have to set the data strm manually.
+    
+    :param sample_div: divisor of the maximum sensor sampling rate.
+    :param sample_frames: number of sample frames emitted per packet.
+    :param pcnt: packet count (set to 0 for unlimited streaming).
+    :param response: request response back from Sphero.
+    """
     mask1 = 0
     mask2 = 0
     for key,value in STRM_MASK1.iteritems():
@@ -563,6 +572,15 @@ class Sphero(threading.Thread):
     self.set_data_strm(sample_div, sample_frames, mask1, pcnt, mask2, response)
 
   def set_raw_data_strm(self, sample_div, sample_frames, pcnt, response):
+    """
+    Helper function to add all the raw data to the data strm mask, so
+    that the user doesn't have to set the data strm manually.
+    
+    :param sample_div: divisor of the maximum sensor sampling rate.
+    :param sample_frames: number of sample frames emitted per packet.
+    :param pcnt: packet count (set to 0 for unlimited streaming).
+    :param response: request response back from Sphero.
+    """
     mask1 = 0
     mask2 = 0
     for key,value in STRM_MASK1.iteritems():
@@ -574,6 +592,15 @@ class Sphero(threading.Thread):
 
 
   def set_all_data_strm(self, sample_div, sample_frames, pcnt, response):
+    """
+    Helper function to add all the data to the data strm mask, so
+    that the user doesn't have to set the data strm manually.
+    
+    :param sample_div: divisor of the maximum sensor sampling rate.
+    :param sample_frames: number of sample frames emitted per packet.
+    :param pcnt: packet count (set to 0 for unlimited streaming).
+    :param response: request response back from Sphero.
+    """
     mask1 = 0
     mask2 = 0
     for value in STRM_MASK1.itervalues():
@@ -783,6 +810,8 @@ class Sphero(threading.Thread):
           if data_length+5 <= len(data):
             data_packet = data[:(5+data_length)]
             data = data[(5+data_length):]
+          else:
+            break
             #print "Response packet", self.data2hexstr(data_packet)
           else:
             break
