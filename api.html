@@ -116,9 +116,9 @@
 <dd>The angular velocity of the sphero.</dd>
 <dt><tt class="docutils literal"><span class="pre">set_back_led</span></tt> (std_msgs/Float32)</dt>
 <dd>Changes the brightness of the back white LED in the Sphero. Completely off is 0.0 and full brightness 1.0.</dd>
-<dt><tt class="docutils literal"><span class="pre">set_color</span></tt></dt>
+<dt><tt class="docutils literal"><span class="pre">set_color</span></tt> (std_msgs/ColorRGBA)</dt>
 <dd>Sets the RGB color of the Sphero.</dd>
-<dt><tt class="docutils literal"><span class="pre">set_heading</span></tt></dt>
+<dt><tt class="docutils literal"><span class="pre">set_heading</span></tt> (std_msgs/Float32)</dt>
 <dd>Immediately changes the heading of the Sphero to the commanded angle. Will move in the shortest angular distance to the commanded heading.</dd>
 </dl>
 </div>
@@ -574,6 +574,27 @@ current set of statistics to the client.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="sphero_driver.Sphero.set_all_data_strm">
+<tt class="descname">set_all_data_strm</tt><big>(</big><em>sample_div</em>, <em>sample_frames</em>, <em>pcnt</em>, <em>response</em><big>)</big><a class="reference internal" href="_modules/sphero_driver.html#Sphero.set_all_data_strm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sphero_driver.Sphero.set_all_data_strm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to add all the data to the data strm mask, so
+that the user doesn&#8217;t have to set the data strm manually.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sample_div</strong> &#8211; divisor of the maximum sensor sampling rate.</li>
+<li><strong>sample_frames</strong> &#8211; number of sample frames emitted per packet.</li>
+<li><strong>pcnt</strong> &#8211; packet count (set to 0 for unlimited streaming).</li>
+<li><strong>response</strong> &#8211; request response back from Sphero.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="sphero_driver.Sphero.set_app_config_blk">
 <tt class="descname">set_app_config_blk</tt><big>(</big><em>app_data</em>, <em>response</em><big>)</big><a class="reference internal" href="_modules/sphero_driver.html#Sphero.set_app_config_blk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sphero_driver.Sphero.set_app_config_blk" title="Permalink to this definition">¶</a></dt>
 <dd><p>This allows you to write a 32 byte block of data from the
@@ -693,6 +714,27 @@ defaults to the Bluetooth advertising name.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="sphero_driver.Sphero.set_filtered_data_strm">
+<tt class="descname">set_filtered_data_strm</tt><big>(</big><em>sample_div</em>, <em>sample_frames</em>, <em>pcnt</em>, <em>response</em><big>)</big><a class="reference internal" href="_modules/sphero_driver.html#Sphero.set_filtered_data_strm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sphero_driver.Sphero.set_filtered_data_strm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to add all the filtered data to the data strm
+mask, so that the user doesn&#8217;t have to set the data strm manually.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sample_div</strong> &#8211; divisor of the maximum sensor sampling rate.</li>
+<li><strong>sample_frames</strong> &#8211; number of sample frames emitted per packet.</li>
+<li><strong>pcnt</strong> &#8211; packet count (set to 0 for unlimited streaming).</li>
+<li><strong>response</strong> &#8211; request response back from Sphero.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="sphero_driver.Sphero.set_heading">
 <tt class="descname">set_heading</tt><big>(</big><em>heading</em>, <em>response</em><big>)</big><a class="reference internal" href="_modules/sphero_driver.html#Sphero.set_heading"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sphero_driver.Sphero.set_heading" title="Permalink to this definition">¶</a></dt>
 <dd><p>This allows the client to adjust the orientation of Sphero by
@@ -727,6 +769,27 @@ flag is as you would expect, 00h to disable and 01h to enable.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>enable</strong> &#8211; 00h to disable and 01h to enable power notifications.</li>
+<li><strong>response</strong> &#8211; request response back from Sphero.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sphero_driver.Sphero.set_raw_data_strm">
+<tt class="descname">set_raw_data_strm</tt><big>(</big><em>sample_div</em>, <em>sample_frames</em>, <em>pcnt</em>, <em>response</em><big>)</big><a class="reference internal" href="_modules/sphero_driver.html#Sphero.set_raw_data_strm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sphero_driver.Sphero.set_raw_data_strm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to add all the raw data to the data strm mask, so
+that the user doesn&#8217;t have to set the data strm manually.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sample_div</strong> &#8211; divisor of the maximum sensor sampling rate.</li>
+<li><strong>sample_frames</strong> &#8211; number of sample frames emitted per packet.</li>
+<li><strong>pcnt</strong> &#8211; packet count (set to 0 for unlimited streaming).</li>
 <li><strong>response</strong> &#8211; request response back from Sphero.</li>
 </ul>
 </td>

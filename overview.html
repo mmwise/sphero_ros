@@ -57,8 +57,11 @@
   <ul>
 <li><a class="reference internal" href="#">sphero_ros Overview</a></li>
 <li><a class="reference internal" href="#quick-start">Quick Start</a><ul>
+<li><a class="reference internal" href="#install-sphero-ros">Install sphero_ros</a></li>
+<li><a class="reference internal" href="#update-the-sphero">Update the Sphero</a></li>
 <li><a class="reference internal" href="#pair-the-sphero">Pair the Sphero</a></li>
 <li><a class="reference internal" href="#start-the-node">Start the Node</a></li>
+<li><a class="reference internal" href="#using-the-launch-file">Using the Launch File</a></li>
 </ul>
 </li>
 </ul>
@@ -99,17 +102,39 @@
 <h1>sphero_ros Overview<a class="headerlink" href="#sphero-ros-overview" title="Permalink to this headline">¶</a></h1>
 <p>sphero_ros contains several packages for controlling and using a sphero with ROS.</p>
 <ul class="simple">
+<li>sphero_bringup: A launch file to bring up the sphero_node and other
+relevant node for playing with odometry.</li>
+<li>sphero_description: A URDF for sphero.</li>
 <li>sphero_driver: A pure python driver for sphero. The driver
 implements most of the Sphero 1.2 API.</li>
 <li>sphero_node: A ROS wrapper for the sphero_driver and exposes all the
 topics and services you would expect to find in a ROS node. For more
 information checkout the node documentation.</li>
-<li>sphero_description: A URDF for sphero.</li>
 </ul>
 </div>
 <div class="section" id="quick-start">
 <h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
 <p>Already familiar with ROS and want to get started?</p>
+<div class="section" id="install-sphero-ros">
+<h2>Install sphero_ros<a class="headerlink" href="#install-sphero-ros" title="Permalink to this headline">¶</a></h2>
+<p>Follow the regular groovy ROS installation instructions:</p>
+<p><a class="reference external" href="http://www.ros.org/wiki/groovy/Installation/Ubuntu">http://www.ros.org/wiki/groovy/Installation/Ubuntu</a></p>
+<p>Then install sphero_ros:</p>
+<div class="highlight-python"><pre>sudo apt-get install sphero_ros</pre>
+</div>
+</div>
+<div class="section" id="update-the-sphero">
+<h2>Update the Sphero<a class="headerlink" href="#update-the-sphero" title="Permalink to this headline">¶</a></h2>
+<p>Make sure that the Sphero firmware is up to date. Currently sphero_ros
+supports firmware 1.20 or later. There currently isn&#8217;t a version check
+in the driver but anyone is welcome to contribute!</p>
+<ul class="simple">
+<li>Pair the Sphero with an Android or iOS device.</li>
+<li>Open the Sphero App.</li>
+<li>Select the info icon to check the current firmware version.</li>
+<li>Update if possible.</li>
+</ul>
+</div>
 <div class="section" id="pair-the-sphero">
 <h2>Pair the Sphero<a class="headerlink" href="#pair-the-sphero" title="Permalink to this headline">¶</a></h2>
 <p>Since Sphero has a PIN, the first step is to setup a new bluetooth
@@ -135,6 +160,15 @@ Paired with Sphero.</pre>
 <p>If the pairing process fails, you will see:</p>
 <div class="highlight-python"><pre>[ERROR] [WallTime: 1363235908.174193] Failed to connect to Sphero.</pre>
 </div>
+</div>
+<div class="section" id="using-the-launch-file">
+<h2>Using the Launch File<a class="headerlink" href="#using-the-launch-file" title="Permalink to this headline">¶</a></h2>
+<p>Now that you have confirmed that the sphero_node starts properly, run
+the launch file that loads the URDF and brings up robot_pose_ekf and
+robot_state_publisher:</p>
+<div class="highlight-python"><pre>roslaunch sphero_bringup sphero.launch</pre>
+</div>
+<p>Your Sphero will turn GREEN.</p>
 </div>
 </div>
 

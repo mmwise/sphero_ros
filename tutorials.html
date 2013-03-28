@@ -53,6 +53,23 @@
             <p class="logo"><a href="contents.html">
               <img class="logo" src="_static/sphero_ros.png" alt="Logo"/>
             </a></p>
+  <h3><a href="contents.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">sphero_ros Tutorials</a><ul>
+<li><a class="reference internal" href="#quick-start">Quick Start</a><ul>
+<li><a class="reference internal" href="#install-sphero-ros">Install sphero_ros</a></li>
+<li><a class="reference internal" href="#update-the-sphero">Update the Sphero</a></li>
+<li><a class="reference internal" href="#pair-the-sphero">Pair the Sphero</a></li>
+<li><a class="reference internal" href="#start-roscore">Start roscore</a></li>
+<li><a class="reference internal" href="#start-the-node">Start the Node</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sphero-hello-world">Sphero &#8220;Hello World&#8221;</a></li>
+<li><a class="reference internal" href="#check-out-the-data">Check Out the Data</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="overview.html"
                         title="previous chapter">sphero_ros Overview</a></p>
@@ -87,6 +104,85 @@
             
   <div class="section" id="sphero-ros-tutorials">
 <h1>sphero_ros Tutorials<a class="headerlink" href="#sphero-ros-tutorials" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h2>
+<p>Already familiar with ROS and want to get started?</p>
+<div class="section" id="install-sphero-ros">
+<h3>Install sphero_ros<a class="headerlink" href="#install-sphero-ros" title="Permalink to this headline">¶</a></h3>
+<p>Follow the regular groovy ROS installation instructions:</p>
+<p><a class="reference external" href="http://www.ros.org/wiki/groovy/Installation/Ubuntu">http://www.ros.org/wiki/groovy/Installation/Ubuntu</a></p>
+<p>Then install sphero_ros:</p>
+<div class="highlight-python"><pre>sudo apt-get install sphero_ros</pre>
+</div>
+</div>
+<div class="section" id="update-the-sphero">
+<h3>Update the Sphero<a class="headerlink" href="#update-the-sphero" title="Permalink to this headline">¶</a></h3>
+<p>Make sure that the Sphero firmware is up to date. Currently sphero_ros
+supports firmware 1.20 or later. There currently isn&#8217;t a version check
+in the driver but anyone is welcome to contribute!</p>
+<ul class="simple">
+<li>Pair the Sphero with an Android or iOS device.</li>
+<li>Open the Sphero App.</li>
+<li>Select the info icon to check the current firmware version.</li>
+<li>Update if possible.</li>
+</ul>
+</div>
+<div class="section" id="pair-the-sphero">
+<h3>Pair the Sphero<a class="headerlink" href="#pair-the-sphero" title="Permalink to this headline">¶</a></h3>
+<p>Since Sphero has a PIN, the first step is to setup a new bluetooth
+device.</p>
+<ul class="simple">
+<li>Shake the Sphero to turn it on.</li>
+<li>Go into the bluetooth setup screen and select the device in the list
+with Sphero in the name.</li>
+<li>Select the device and set the PIN option to &#8216;0000&#8217;.</li>
+</ul>
+</div>
+<div class="section" id="start-roscore">
+<h3>Start roscore<a class="headerlink" href="#start-roscore" title="Permalink to this headline">¶</a></h3>
+<p>In a terminal, run:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">roscore</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="start-the-node">
+<h3>Start the Node<a class="headerlink" href="#start-the-node" title="Permalink to this headline">¶</a></h3>
+<p>Now start the Sphero node:</p>
+<div class="highlight-python"><pre>rosrun sphero_node sphero.py</pre>
+</div>
+<p>You should see:</p>
+<div class="highlight-python"><pre>Searching for devices............
+Found Sphero device with address: XX:XX:XX:XX:XX:XX
+Paired with Sphero.</pre>
+</div>
+<p>Your Sphero will turn GREEN.</p>
+<p>If the pairing process fails, you will see:</p>
+<div class="highlight-python"><pre>[ERROR] [WallTime: 1363235908.174193] Failed to connect to Sphero.</pre>
+</div>
+</div>
+</div>
+<div class="section" id="sphero-hello-world">
+<h2>Sphero &#8220;Hello World&#8221;<a class="headerlink" href="#sphero-hello-world" title="Permalink to this headline">¶</a></h2>
+<p>Make the Sphero move right away. Follow the steps in the Quick Start
+section. Then get to publishing commands:</p>
+<div class="highlight-python"><pre>rostopic pub cmd_vel geometry_msgs/Twist -r 10 '[1, 0, 0]' '[0, 0, 0]'</pre>
+</div>
+<p>The Sphero should start rolling away at 1m/s.</p>
+<p>Change the Sphero color:</p>
+<div class="highlight-python"><pre>rostopic pub set_color std_msgs/ColorRGBA 1 0 0</pre>
+</div>
+<p>The Sphero should turn RED.</p>
+</div>
+<div class="section" id="check-out-the-data">
+<h2>Check Out the Data<a class="headerlink" href="#check-out-the-data" title="Permalink to this headline">¶</a></h2>
+<p>See what the different sensors are publishing, for example the imu:</p>
+<div class="highlight-python"><pre>rostopic echo imu</pre>
+</div>
+<p>Or see what happens when you collide with the world subscribe to
+collision:</p>
+<div class="highlight-python"><pre>rostopic echo collision</pre>
+</div>
+</div>
 </div>
 
 
