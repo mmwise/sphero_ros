@@ -22,9 +22,9 @@ Subscribed Topics
  The angular velocity of the sphero.
 ``set_back_led`` (std_msgs/Float32)
  Changes the brightness of the back white LED in the Sphero. Completely off is 0.0 and full brightness 1.0.
-``set_color`` 
+``set_color`` (std_msgs/ColorRGBA)
  Sets the RGB color of the Sphero. 
-``set_heading``
+``set_heading`` (std_msgs/Float32)
  Immediately changes the heading of the Sphero to the commanded angle. Will move in the shortest angular distance to the commanded heading.
 
 Published Topics
