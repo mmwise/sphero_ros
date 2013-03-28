@@ -9,7 +9,7 @@
   <property name="M_PI" value="3.14159"/>
   <property name="SCALE" value="0.0254"/>
 
-  <link name="base_footprint"/>
+
 
 
 <link name="base_link">
@@ -21,7 +21,7 @@
     </inertial>
 
     <visual>
-      <origin xyz=" 0 0 0" rpy="0 0 0" />
+      <origin xyz=" 0 0 0" rpy="3.14 0 0" />
       <geometry>
 	<mesh filename="package://sphero_description/meshes/Sphero_Textured.dae" scale=" 0.0127 0.0127 0.0127"/>
       </geometry>
@@ -35,11 +35,20 @@
     </collision>
   </link>
 
-  <joint name="base_footprint_joint" type="fixed">
+
+ 
+
+  <!--joint name="base_footprint_joint" type="fixed">
     <origin xyz="0 0 0.0381" rpy="0 0 0" />
     <parent link="base_footprint"/>
     <child link="base_link" />
   </joint>
+
+  <joint name="imu_joint" type="fixed">
+    <origin xyz="0 0 0.0" rpy="0 0 0" />
+    <parent link="base_link"/>
+    <child link="imu_link" />
+  </joint-->
 
 
 </robot>

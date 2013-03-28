@@ -104,6 +104,7 @@ class SpheroNode(object):
         self.heading_sub = rospy.Subscriber('set_heading', Float32, self.set_heading, queue_size = 1)
         self.angular_velocity_sub = rospy.Subscriber('set_angular_velocity', Float32, self.set_angular_velocity, queue_size = 1)
         self.reconfigure_srv = dynamic_reconfigure.server.Server(ReconfigConfig, self.reconfigure)
+        self.transform_broadcaster = tf.TransformBroadcaster()
 
     def _init_params(self):
         self.connect_color_red = rospy.get_param('~connect_red',0)
@@ -200,11 +201,10 @@ class SpheroNode(object):
             now = rospy.Time.now()
             imu = Imu(header=rospy.Header(frame_id="imu_link"))
             imu.header.stamp = now
-            (imu.orientation.x, imu.orientation.y, imu.orientation.z, imu.orientation.w) = PyKDL.Rotation.RPY(data["IMU_ROLL_FILTERED"]/180.0*math.pi,
-                                                                                                              data["IMU_PITCH_FILTERED"]/180*math.pi,
-                                                                                                              data["IMU_YAW_FILTERED"]/180*math.pi).GetQuaternion()
-
-
+            imu.orientation.x = data["QUATERNION_Q0"]
+            imu.orientation.y = data["QUATERNION_Q1"]
+            imu.orientation.z = data["QUATERNION_Q2"]
+            imu.orientation.w = data["QUATERNION_Q3"]
             imu.linear_acceleration.x = data["ACCEL_X_FILTERED"]/4096.0*9.8
             imu.linear_acceleration.y = data["ACCEL_Y_FILTERED"]/4096.0*9.8
             imu.linear_acceleration.z = data["ACCEL_Z_FILTERED"]/4096.0*9.8
@@ -217,11 +217,16 @@ class SpheroNode(object):
 
             odom = Odometry(header=rospy.Header(frame_id="odom"), child_frame_id='base_footprint')
             odom.header.stamp = now
-            odom.pose.pose = Pose(Point(data["ODOM_X"]/100.0,data["ODOM_Y"]/100.0,0.0), Quaternion(imu.orientation.x, imu.orientation.y, imu.orientation.z, imu.orientation.w))
+            odom.pose.pose = Pose(Point(data["ODOM_X"]/100.0,data["ODOM_Y"]/100.0,0.0), Quaternion(0.0,0.0,0.0,1.0))
             odom.twist.twist = Twist(Vector3(data["VELOCITY_X"]/1000.0, 0, 0), Vector3(0, 0, data["GYRO_Z_FILTERED"]*10.0*math.pi/180.0))
             odom.pose.covariance =self.ODOM_POSE_COVARIANCE                
             odom.twist.covariance =self.ODOM_TWIST_COVARIANCE
             self.odom_pub.publish(odom)                      
+
+            #need to publish this trasform to show the roll, pitch, and yaw properly
+            self.transform_broadcaster.sendTransform((0.0, 0.0, 0.038 ),
+                (data["QUATERNION_Q0"], data["QUATERNION_Q1"], data["QUATERNION_Q2"], data["QUATERNION_Q3"]),
+                odom.header.stamp, "base_link", "base_footprint")
 
     def cmd_vel(self, msg):
         if self.is_connected:
