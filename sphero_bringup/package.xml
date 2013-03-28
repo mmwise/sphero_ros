@@ -1,6 +1,6 @@
 <package>
   <name>sphero_bringup</name>
-  <version>0.1.2</version>
+  <version>0.1.3</version>
   <description>
     sphero_bringup provides launch files for quickly bringup sphero with robot_pose_ekf and urdf
   </description>
