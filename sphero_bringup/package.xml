@@ -12,7 +12,6 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>urdf</run_depend>
-  <run_depend>robot_pose_ekf</run_depend>
   <run_depend>robot_state_publisher</run_depend>
   <run_depend>sphero_node</run_depend>
   <run_depend>sphero_description</run_depend>
