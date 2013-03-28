@@ -1,6 +1,6 @@
 <launch>
   <param name="robot_description" textfile='$(find sphero_description)/urdf/sphero.urdf' />
-  <node pkg="robot_state_publisher" type="state_publisher" name="robot_state_publisher" output="screen">
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
     <param name="publish_frequency" type="double" value="50.0" />
   </node>
   <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
@@ -12,4 +12,5 @@
     <param name="vo_used" value="false"/>
     <param name="self_diagnose" value="false"/>
   </node>
+  <node pkg="sphero_node" type="sphero.py" name="sphero_node"/>
 </launch>
