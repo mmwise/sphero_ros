@@ -118,6 +118,7 @@ class SpheroNode(object):
     def start(self):
         try:
             self.is_connected = self.robot.connect()
+            rospy.loginfo("Connect to Sphero with address: %s" % self.robot.bt.target_address)
         except:
             rospy.logerr("Failed to connect to Sphero.")
             sys.exit(1)
@@ -216,8 +217,8 @@ class SpheroNode(object):
 
             odom = Odometry(header=rospy.Header(frame_id="odom"), child_frame_id='base_footprint')
             odom.header.stamp = now
-            odom.pose.pose = Pose(Point(data["ODOM_X"]/100.0,data["ODOM_Y"]/100.0,0.0), Quaternion(imu.orientation.x, imu.orientation.y, imu.orientation.z, imu.orientation.w)
-            odom.twist.twist = Twist(Vector3(data["VELOCITY_X"]/1000.0, 0, 0), Vector3(0, 0, data["GYRO_Z_FILTERED"]*10*math.pi/180))
+            odom.pose.pose = Pose(Point(data["ODOM_X"]/100.0,data["ODOM_Y"]/100.0,0.0), Quaternion(imu.orientation.x, imu.orientation.y, imu.orientation.z, imu.orientation.w))
+            odom.twist.twist = Twist(Vector3(data["VELOCITY_X"]/1000.0, 0, 0), Vector3(0, 0, data["GYRO_Z_FILTERED"]*10.0*math.pi/180.0))
             odom.pose.covariance =self.ODOM_POSE_COVARIANCE                
             odom.twist.covariance =self.ODOM_TWIST_COVARIANCE
             self.odom_pub.publish(odom)                      

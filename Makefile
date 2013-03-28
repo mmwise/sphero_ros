@@ -1,6 +1,6 @@
 # Makefile for Sphinx documentation
 #
-GH_PAGES_SOURCES = docs sphero_driver sphero_node sphero_description
+GH_PAGES_SOURCES = docs sphero_driver sphero_node sphero_description sphero_bringup
 
 # You can set these variables from the command line.
 SPHINXOPTS    =

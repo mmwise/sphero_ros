@@ -813,8 +813,7 @@ class Sphero(threading.Thread):
           else:
             break
             #print "Response packet", self.data2hexstr(data_packet)
-          else:
-            break
+         
         elif data[:2] == RECV['ASYNC']:
           data_length = (ord(data[3])<<8)+ord(data[4])
           if data_length+5 <= len(data):
