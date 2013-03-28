@@ -7,7 +7,7 @@
   <author>Melonee Wise</author>
   <maintainer email="melonee@meloneewise.com">Melonee Wise</maintainer>
   <license>BSD</license>
-  <url>http://ros.org/wiki/sphero_description</url>
+  <url>http://ros.org/wiki/sphero_bringup</url>
   
   <buildtool_depend>catkin</buildtool_depend>
 
