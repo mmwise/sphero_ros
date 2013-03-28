@@ -1,0 +1,20 @@
+<package>
+  <name>sphero_bringup</name>
+  <version>0.1.1</version>
+  <description>
+    sphero_bringup provides launch files for quickly bringup sphero with robot_pose_ekf and urdf
+  </description>
+  <author>Melonee Wise</author>
+  <maintainer email="melonee@meloneewise.com">Melonee Wise</maintainer>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/sphero_description</url>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>urdf</run_depend>
+  <run_depend>robot_pose_ekf</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
+  <run_depend>sphero_node</run_depend>
+  <run_depend>sphero_description</run_depend>
+
+</package>
