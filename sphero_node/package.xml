@@ -1,6 +1,6 @@
 <package>
   <name>sphero_node</name>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <description>
     sphero_node provides a ROS wrapper for the sphero driver.
   </description>
