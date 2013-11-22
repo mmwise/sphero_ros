@@ -26,7 +26,7 @@ http://www.ros.org/wiki/groovy/Installation/Ubuntu
 
 Then install sphero_ros::
 
-  sudo apt-get install sphero_ros
+  sudo apt-get install ros-groovy-sphero-bringup
 
 Update the Sphero
 -----------------
