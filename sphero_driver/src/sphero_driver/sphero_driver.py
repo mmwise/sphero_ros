@@ -161,47 +161,49 @@ STRM_MASK2 = dict(
 
 class BTInterface(object):
 
-  def __init__(self, target_name = 'Sphero', port = 1):
+  def __init__(self, target_name = 'Sphero', target_addr = None, port = 1):
       self.target_name = target_name
       self.port = port
       self.found_device = False
       self.tries = 0
-      self.target_address = None
+      self.target_address = target_addr
       self.sock = None
 
   def connect(self):
-    sys.stdout.write("Searching for devices....")
-    sys.stdout.flush()
+    if self.target_address is None:
+        sys.stdout.write("Searching for devices....")
+        sys.stdout.flush()
 
-    for i in range(10):
-      sys.stdout.write("....")
-      sys.stdout.flush()
-      nearby_devices = bluetooth.discover_devices(lookup_names = True)
+        for i in range(10):
+          sys.stdout.write("....")
+          sys.stdout.flush()
+          nearby_devices = bluetooth.discover_devices(lookup_names = True)
 
-      if len(nearby_devices)>0:
-        for bdaddr, name in nearby_devices:
-          #look for a device name that starts with Sphero
-          if name.startswith(self.target_name):
-            self.found_device = True
-            self.target_address = bdaddr
+          if len(nearby_devices)>0:
+            for bdaddr, name in nearby_devices:
+              #look for a device name that starts with Sphero
+              if name.startswith(self.target_name):
+                self.found_device = True
+                self.target_address = bdaddr
+                break
+          if self.found_device:
             break
-      if self.found_device:
-        break
 
-
-    if self.target_address is not None:
-      sys.stdout.write("\nFound Sphero device with address: %s\n" %  (self.target_address))
-      sys.stdout.flush()
+        if self.target_address is not None:
+          sys.stdout.write("\nFound Sphero device with address: %s\n" %  (self.target_address))
+          sys.stdout.flush()
+        else:
+          sys.stdout.write("\nNo Sphero devices found.\n" )
+          sys.stdout.flush()
+          sys.exit(1)
     else:
-      sys.stdout.write("\nNo Sphero devices found.\n" )
-      sys.stdout.flush()
-      sys.exit(1)
+        sys.stdout.write("Connecting to device: " + self.target_address + "...")
 
     try:
       self.sock=bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-      self.sock.connect((bdaddr,self.port))
+      self.sock.connect((self.target_address,self.port))
     except bluetooth.btcommon.BluetoothError as error:
-      sys.stdout.write(error)
+      sys.stdout.write(error.strerror)
       sys.stdout.flush()
       time.sleep(5.0)
       sys.exit(1)
@@ -220,9 +222,10 @@ class BTInterface(object):
 
 class Sphero(threading.Thread):
 
-  def __init__(self, target_name = 'Sphero'):
+  def __init__(self, target_name = 'Sphero', target_addr = None):
     threading.Thread.__init__(self)
     self.target_name = target_name
+    self.target_address = target_addr
     self.bt = None
     self.shutdown = False
     self.is_connected = False
@@ -237,7 +240,7 @@ class Sphero(threading.Thread):
     self._sync_callback_queue = []
 
   def connect(self):
-    self.bt = BTInterface(self.target_name)
+    self.bt = BTInterface(self.target_name, self.target_address)
     self.is_connected = self.bt.connect()
     return True
 
@@ -829,7 +832,7 @@ class Sphero(threading.Thread):
           elif data_packet[2]==IDCODE['PWR_NOTIFY'] and self._async_callback_dict.has_key(IDCODE['PWR_NOTIFY']):
             self._async_callback_dict[IDCODE['PWR_NOTIFY']](self.parse_pwr_notify(data_packet, data_length))
           else:
-            print "got a packet that isn't streaming"
+            print "got a packet that isn't streaming: " + self.data2hexstr(data)
         else:
           raise RuntimeError("Bad SOF : " + self.data2hexstr(data))
       self.raw_data_buf=data
